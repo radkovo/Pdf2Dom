@@ -56,6 +56,9 @@ import org.w3c.dom.Text;
  */
 public class CSSBoxTree extends PDFDomTree
 {
+    /** Scale factor for unknown fonts - it is used to prevent overlaping the boxes when an inappropriate font is used */
+    protected float unknownFontScale = 0.95f;
+    
     /** Length units used in the output */
     protected Unit unit = Unit.pt;
     
@@ -259,7 +262,12 @@ public class CSSBoxTree extends PDFDomTree
 		if (style.getFontFamily() != null)
 			ret.push(createDeclaration("font-family", tf.createString(style.getFontFamily())));
 		if (style.getFontSize() != 0)
-			ret.push(createDeclaration("font-size", tf.createLength((float) style.getFontSize(), unit)));
+		{
+		    float size = (float) style.getFontSize();
+		    if (style.getFontFamily() == null)
+		        size = size * unknownFontScale;
+			ret.push(createDeclaration("font-size", tf.createLength(size, unit)));
+		}
 		if (style.getFontWeight() != null)
 			ret.push(createDeclaration("font-weight", tf.createIdent(style.getFontWeight())));
 		if (style.getFontStyle() != null)
