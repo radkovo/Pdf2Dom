@@ -45,6 +45,7 @@ public class PdfBrowserCanvas extends BrowserCanvas
     protected PDDocument pdfdocument;
     protected int startPage;
     protected int endPage;
+    protected boolean pdfLoaded = false;
     
     protected CSSBoxTree boxtree;
 
@@ -60,6 +61,7 @@ public class PdfBrowserCanvas extends BrowserCanvas
         this.startPage = startPage;
         this.endPage = endPage;
         createPdfLayout(dim);
+        pdfLoaded = true;
     }
 
     public PdfBrowserCanvas(PDDocument document, DOMAnalyzer decoder, Dimension dim, URL baseurl)
@@ -69,6 +71,7 @@ public class PdfBrowserCanvas extends BrowserCanvas
         this.startPage = 0;
         this.endPage = Integer.MAX_VALUE;
         createPdfLayout(dim);
+        pdfLoaded = true;
     }
     
     public CSSBoxTree getBoxTree()
@@ -81,10 +84,16 @@ public class PdfBrowserCanvas extends BrowserCanvas
     @Override
     public void createLayout(Dimension dim)
     {
-    	//Create the layout only when some DOM model is specified.
-    	//In PDF mode, no root is specified at the begining i.e. nothing will be done
-    	if (root != null)
-    		super.createLayout(dim);
+        if (pdfdocument != null) //PDF mode: create the layout only when the DOM tree is already finished
+        {
+            if (pdfLoaded)
+                createPdfLayout(dim);
+        }
+        else //DOM mode
+        {
+        	if (root != null)
+        		super.createLayout(dim);
+        }
     }
     
     /**

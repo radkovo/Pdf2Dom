@@ -206,11 +206,15 @@ public class PDFDomTree extends PDFBoxTree
      */
     protected Element createPageElement()
     {
-        PDRectangle layout = pdpage.getMediaBox();
-        float width = layout.getUpperRightX();
-        float height = layout.getUpperRightY();
-        String pstyle = "width:" + width + UNIT + ";"
-                      + "height:" + height + UNIT;
+        String pstyle = "";
+        PDRectangle layout = getCurrentMediaBox();
+        if (layout != null)
+        {
+            pstyle = "width:" + layout.getUpperRightX() + UNIT + ";"
+                     + "height:" + layout.getUpperRightY() + UNIT;
+        }
+        else
+            System.err.println("Warning: no media box found");
         
         Element el = doc.createElement("div");
         el.setAttribute("id", "page_" + (pagecnt++));

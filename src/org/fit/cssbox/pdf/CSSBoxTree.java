@@ -287,10 +287,15 @@ public class CSSBoxTree extends PDFDomTree
 		ret.push(createDeclaration("border-color", tf.createColor(0, 0, 255)));
 		ret.push(createDeclaration("margin", tf.createLength(0.5f, Unit.em)));
 		
-        PDRectangle layout = pdpage.getMediaBox();
-		ret.push(createDeclaration("width", tf.createLength(layout.getUpperRightX(), unit)));
-		ret.push(createDeclaration("height", tf.createLength(layout.getUpperRightY(), unit)));
-
+        PDRectangle layout = getCurrentMediaBox();
+        if (layout != null)
+        {
+            ret.push(createDeclaration("width", tf.createLength(layout.getUpperRightX(), unit)));
+            ret.push(createDeclaration("height", tf.createLength(layout.getUpperRightY(), unit)));
+        }
+        else
+            System.err.println("Warning: no media box found");
+        
         return ret;
     }
     
@@ -322,13 +327,15 @@ public class CSSBoxTree extends PDFDomTree
             else
                 ret.push(createDeclaration("border-width", tf.createLength(lineWidth, unit)));
             ret.push(createDeclaration("border-style", tf.createIdent("solid")));
-            String color = (strokingColor != null) ? "#000000" : strokingColor;
+            String color = (strokingColor == null) ? "#000000" : strokingColor;
             ret.push(createDeclaration("border-color", tf.createColor(color)));
         }
         
         if (fill)
         {
-            ret.push(createDeclaration("background-color", tf.createColor(style.getColor())));
+            String color = style.getColor();
+            if (color != null)
+                ret.push(createDeclaration("background-color", tf.createColor(color)));
         }
 
         return ret;

@@ -37,6 +37,8 @@ import org.apache.pdfbox.exceptions.InvalidPasswordException;
 import org.apache.pdfbox.exceptions.WrappedIOException;
 import org.apache.pdfbox.pdmodel.PDDocument;
 import org.apache.pdfbox.pdmodel.PDPage;
+import org.apache.pdfbox.pdmodel.PDPageNode;
+import org.apache.pdfbox.pdmodel.common.PDRectangle;
 import org.apache.pdfbox.pdmodel.common.PDStream;
 import org.apache.pdfbox.pdmodel.graphics.xobject.PDJpeg;
 import org.apache.pdfbox.pdmodel.graphics.xobject.PDXObject;
@@ -321,7 +323,7 @@ public abstract class PDFBoxTree extends PDFTextStripper
             throws IOException
     {
         String operation = operator.getOperation();
-        //System.out.println("Operation " + operation);
+        //System.out.println("Operator: " + operation + ":" + arguments.size());
 
         //set gray for nonstroking operations
         if (operation.equals("g"))
@@ -361,7 +363,7 @@ public abstract class PDFBoxTree extends PDFTextStripper
                         floatValue(arguments.get(2))));
             }
             else
-                System.err.println("Warning: unsupported color specification: " + arguments);
+                System.err.println("Warning: scn: unsupported color specification: " + arguments);
         }
         else if (operation.equals("SCN")) // TODO: rgb only for now 
         {
@@ -372,7 +374,7 @@ public abstract class PDFBoxTree extends PDFTextStripper
                                             floatValue(arguments.get(2)));
             }
             else
-                System.err.println("Warning: unsupported color specification: " + arguments);
+                System.err.println("Warning: SCN: unsupported color specification: " + arguments);
         }
 
         //word spacing
@@ -559,11 +561,10 @@ public abstract class PDFBoxTree extends PDFTextStripper
         String weight = null;
         String fstyle = null;
         
+        bstyle.setFontSize(text.getFontSizeInPt());
+
         if (font != null)
         {
-        	//font size
-        	bstyle.setFontSize(text.getFontSizeInPt());
-        	
         	//font style and weight
             for (int i = 0; i < pdFontType.length; i++)
             {
@@ -596,6 +597,26 @@ public abstract class PDFBoxTree extends PDFTextStripper
             	bstyle.setFontFamily(family);
         }
 
+    }
+    
+    /**
+     * Obtains the media box valid for the current page.
+     * @return the media box rectangle
+     */
+    protected PDRectangle getCurrentMediaBox()
+    {
+        PDRectangle layout = pdpage.getMediaBox();
+        if (layout == null)
+        {
+            PDPageNode curpage;
+            do
+            {
+                curpage = pdpage.getParent();
+                if (curpage != null)
+                    layout = curpage.getMediaBox();
+            } while (layout == null && curpage != null);
+        }
+        return layout;
     }
     
     //===========================================================================================
