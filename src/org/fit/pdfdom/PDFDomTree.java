@@ -139,7 +139,7 @@ public class PDFDomTree extends PDFBoxTree
         super.processDocument(document, startPage, endPage);
         //use the PDF title
         String doctitle = document.getDocumentInformation().getTitle();
-        if (doctitle != null)
+        if (doctitle != null && doctitle.trim().length() > 0)
             title.setTextContent(doctitle);
     }
 
