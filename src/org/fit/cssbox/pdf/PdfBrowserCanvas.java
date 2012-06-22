@@ -49,11 +49,27 @@ public class PdfBrowserCanvas extends BrowserCanvas
     
     protected CSSBoxTree boxtree;
 
+    /**
+     * Creates a canvas from a HTML DOM (for compatibility with BrowserCanvas) and computes the layout.
+     * @param root DOM root node
+     * @param decoder CSS decoder
+     * @param dim preferred dimension
+     * @param baseurl base URL for loading referenced data
+     */
     public PdfBrowserCanvas(Element root, DOMAnalyzer decoder, Dimension dim, URL baseurl)
     {
         super(root, decoder, dim, baseurl); //DOM mode (no PDF)
     }
 
+    /**
+     * Creates a canvas from a PDF file and computes the layout.
+     * @param document the PDF document
+     * @param startPage starting page
+     * @param endPage ending page
+     * @param decoder DOM analyzer
+     * @param dim preferred canvas dimension
+     * @param baseurl base URL for loading referenced data
+     */
     public PdfBrowserCanvas(PDDocument document, int startPage, int endPage, DOMAnalyzer decoder, Dimension dim, URL baseurl)
     {
         super(null, decoder, dim, baseurl);
@@ -64,6 +80,13 @@ public class PdfBrowserCanvas extends BrowserCanvas
         pdfLoaded = true;
     }
 
+    /**
+     * Creates a canvas from a PDF file and computes the layout.
+     * @param document the PDF document
+     * @param decoder DOM analyzer
+     * @param dim preferred canvas dimension
+     * @param baseurl base URL for loading referenced data
+     */
     public PdfBrowserCanvas(PDDocument document, DOMAnalyzer decoder, Dimension dim, URL baseurl)
     {
         super(null, decoder, dim, baseurl);
@@ -74,6 +97,28 @@ public class PdfBrowserCanvas extends BrowserCanvas
         pdfLoaded = true;
     }
     
+    /**
+     * Creates a canvas from a PDF file <b>without computing the layout</b>. The layout may be computed
+     * afterwards by calling the {@link #createLayout(Dimension)} method.
+     * @param document the PDF document
+     * @param startPage starting page
+     * @param endPage ending page
+     * @param decoder DOM analyzer
+     * @param baseurl base URL for loading referenced data
+     */
+    public PdfBrowserCanvas(PDDocument document, int startPage, int endPage, DOMAnalyzer decoder, URL baseurl)
+    {
+        super(null, decoder, baseurl);
+        this.pdfdocument = document;
+        this.startPage = startPage;
+        this.endPage = endPage;
+        pdfLoaded = true;
+    }
+
+    /**
+     * Obtains the created tree of boxes.
+     * @return the box tree.
+     */
     public CSSBoxTree getBoxTree()
     {
     	return boxtree;
@@ -105,14 +150,15 @@ public class PdfBrowserCanvas extends BrowserCanvas
         if (pdfdocument != null) //processing a PDF document
         {
             try {
-                img = new BufferedImage(dim.width, dim.height, BufferedImage.TYPE_INT_RGB);
-                System.gc();
+                if (createImage)
+                    img = new BufferedImage(dim.width, dim.height, BufferedImage.TYPE_INT_RGB);
                 Graphics2D ig = img.createGraphics();
                 
                 VisualContext ctx = new VisualContext(null);
                 
                 System.err.println("Creating PDF boxes");
                 boxtree = new CSSBoxTree(ig, ctx, dim, baseurl);
+                boxtree.setConfig(config);
                 boxtree.processDocument(pdfdocument, startPage, endPage);
                 viewport = boxtree.getViewport();
                 root = boxtree.getDocument().getDocumentElement();
@@ -127,7 +173,7 @@ public class PdfBrowserCanvas extends BrowserCanvas
                 viewport.updateBounds();
                 System.err.println("Resulting size: " + viewport.getWidth() + "x" + viewport.getHeight() + " (" + viewport + ")");
                 
-                if (viewport.getWidth() > dim.width || viewport.getHeight() > dim.height)
+                if (createImage && (viewport.getWidth() > dim.width || viewport.getHeight() > dim.height))
                 {
                     img = new BufferedImage(Math.max(viewport.getWidth(), dim.width),
                                             Math.max(viewport.getHeight(), dim.height),

@@ -36,6 +36,7 @@ import cz.vutbr.web.css.TermNumeric.Unit;
 import org.apache.pdfbox.pdmodel.common.PDRectangle;
 import org.fit.cssbox.layout.BlockBox;
 import org.fit.cssbox.layout.BlockReplacedBox;
+import org.fit.cssbox.layout.BrowserConfig;
 import org.fit.cssbox.layout.ReplacedImage;
 import org.fit.cssbox.layout.TextBox;
 import org.fit.cssbox.layout.Viewport;
@@ -76,6 +77,9 @@ public class CSSBoxTree extends PDFDomTree
 	/** The box representing the page that is currently being created */
     protected BlockBox pagebox;
 
+    /** Used CSSBox configuration */
+    protected BrowserConfig config;
+    
     /** Internal counter for assigning the node IDs */
     protected int next_order;
     
@@ -105,7 +109,17 @@ public class CSSBoxTree extends PDFDomTree
     {
         next_order = 0;
     }
-            
+
+    public BrowserConfig getConfig()
+    {
+        return config;
+    }
+
+    public void setConfig(BrowserConfig config)
+    {
+        this.config = config;
+    }
+
     /**
      * Obtains the resulting viewport that represents the root node of the resulting box tree.
      * @return the viewport
@@ -132,6 +146,7 @@ public class CSSBoxTree extends PDFDomTree
         Element vp = createAnonymousElement(getDocument(), "Xdiv", "block");
         Element root = getDocument().getDocumentElement();
         viewport = new Viewport(vp, g, ctx, null, root, dim.width, dim.height);
+        viewport.setConfig(config);
     }
 
     //===========================================================================================
@@ -214,15 +229,16 @@ public class CSSBoxTree extends PDFDomTree
         if (replaced)
         {
             BlockReplacedBox rbox = new BlockReplacedBox((Element) n, (Graphics2D) parent.getGraphics().create(), parent.getVisualContext().create());
+            rbox.setViewport(viewport);
             rbox.setContentObj(new ReplacedImage(rbox, rbox.getVisualContext(), baseurl));
             root = rbox;
         }
         else
         {
             root = new BlockBox((Element) n, (Graphics2D) parent.getGraphics().create(), parent.getVisualContext().create());
+            root.setViewport(viewport);
         }
         root.setBase(baseurl);
-        root.setViewport(viewport);
         root.setParent(parent);
         root.setContainingBlock(parent);
         root.setClipBlock(viewport);
