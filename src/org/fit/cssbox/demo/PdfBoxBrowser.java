@@ -47,7 +47,7 @@ public class PdfBoxBrowser extends org.fit.cssbox.demo.BoxBrowser
 {
 
     @Override
-    public void displayURL(String urlstring)
+    public URL displayURL(String urlstring)
     {
         try {
             if (!urlstring.startsWith("http:") &&
@@ -61,6 +61,7 @@ public class PdfBoxBrowser extends org.fit.cssbox.demo.BoxBrowser
             URLConnection con = url.openConnection();
             con.setRequestProperty("User-Agent", "Mozilla/5.0 (compatible; BoxBrowserTest/2.x; Linux) CSSBox/2.x (like Gecko)");
             InputStream is = con.getInputStream();
+            url = con.getURL(); //update the URL after possible redirects
             
             System.out.println("Parsing PDF: " + url);
             PDDocument doc = loadPdf(is);
@@ -91,10 +92,12 @@ public class PdfBoxBrowser extends org.fit.cssbox.demo.BoxBrowser
             domTree.setModel(new DefaultTreeModel(createDomTree(dom)));
             
             //=============================================================================
-           
+            return url;
+            
         } catch (Exception e) {
             System.err.println("*** Error: "+e.getMessage());
             e.printStackTrace();
+            return null;
         }
         
     }
