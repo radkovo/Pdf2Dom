@@ -170,7 +170,7 @@ public class PdfBrowserCanvas extends BrowserCanvas
                 System.err.println("Resulting size: " + viewport.getWidth() + "x" + viewport.getHeight() + " (" + viewport + ")");
         
                 System.err.println("Updating viewport size");
-                viewport.updateBounds();
+                viewport.updateBounds(dim);
                 System.err.println("Resulting size: " + viewport.getWidth() + "x" + viewport.getHeight() + " (" + viewport + ")");
                 
                 if (createImage && (viewport.getWidth() > dim.width || viewport.getHeight() > dim.height))
