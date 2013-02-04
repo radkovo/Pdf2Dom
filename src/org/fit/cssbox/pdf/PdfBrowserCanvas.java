@@ -154,9 +154,9 @@ public class PdfBrowserCanvas extends BrowserCanvas
                     img = new BufferedImage(dim.width, dim.height, BufferedImage.TYPE_INT_RGB);
                 Graphics2D ig = img.createGraphics();
                 
-                VisualContext ctx = new VisualContext(null);
-                
                 System.err.println("Creating PDF boxes");
+                VisualContext ctx = new VisualContext(null, null);
+                
                 boxtree = new CSSBoxTree(ig, ctx, dim, baseurl);
                 boxtree.setConfig(config);
                 boxtree.processDocument(pdfdocument, startPage, endPage);
