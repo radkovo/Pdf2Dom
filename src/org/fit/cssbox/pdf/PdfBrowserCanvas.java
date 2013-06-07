@@ -31,6 +31,7 @@ import org.apache.pdfbox.pdmodel.PDDocument;
 import org.fit.cssbox.css.DOMAnalyzer;
 import org.fit.cssbox.layout.BrowserCanvas;
 import org.fit.cssbox.layout.VisualContext;
+import org.fit.cssbox.render.GraphicsRenderer;
 import org.w3c.dom.Element;
 
 /**
@@ -185,7 +186,7 @@ public class PdfBrowserCanvas extends BrowserCanvas
                 viewport.absolutePositions();
                 
                 clearCanvas();
-                viewport.draw(ig);
+                viewport.draw(new GraphicsRenderer(ig));
                 setPreferredSize(new Dimension(img.getWidth(), img.getHeight()));
                 revalidate();
             } catch (ParserConfigurationException e) {
