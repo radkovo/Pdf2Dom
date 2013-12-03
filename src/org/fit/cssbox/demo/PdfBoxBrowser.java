@@ -89,7 +89,8 @@ public class PdfBoxBrowser extends org.fit.cssbox.demo.BoxBrowser
             
             //dom tree
             Document dom = ((PdfBrowserCanvas) contentCanvas).getBoxTree().getDocument();
-            domTree.setModel(new DefaultTreeModel(createDomTree(dom)));
+            domRoot = createDomTree(dom);
+            domTree.setModel(new DefaultTreeModel(domRoot));
             
             //=============================================================================
             return url;
