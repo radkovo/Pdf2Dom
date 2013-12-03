@@ -74,6 +74,10 @@ public class CSSBoxTree extends PDFDomTree
 	
 	/** The resulting viewport */
 	protected Viewport viewport;
+	/** HTML box */
+	protected BlockBox html;
+	/** BODY box */
+	protected BlockBox body;
 	/** The box representing the page that is currently being created */
     protected BlockBox pagebox;
 
@@ -147,6 +151,13 @@ public class CSSBoxTree extends PDFDomTree
         Element root = getDocument().getDocumentElement();
         viewport = new Viewport(vp, g, ctx, null, root, dim.width, dim.height);
         viewport.setConfig(config);
+        //create the root boxes
+        html = createBlock(viewport, root, false);
+        html.setStyle(createBlockStyle());
+        viewport.addSubBox(html);
+        body = createBlock(html, (Element) root.getElementsByTagName("body").item(0), false);
+        body.setStyle(createBodyStyle());
+        html.addSubBox(body);
     }
 
     //===========================================================================================
@@ -155,9 +166,9 @@ public class CSSBoxTree extends PDFDomTree
     protected void startNewPage()
     {
         super.startNewPage();
-        pagebox = createBlock(viewport, curpage, false);
+        pagebox = createBlock(body, curpage, false);
         pagebox.setStyle(createPageStyle());
-        viewport.addSubBox(pagebox);
+        body.addSubBox(pagebox);
     }
 
     @Override
@@ -298,12 +309,36 @@ public class CSSBoxTree extends PDFDomTree
     }
     
     /**
+     * Creates an empty block style definition.
+     * @return 
+     */
+    protected NodeData createBlockStyle()
+    {
+        NodeData ret = CSSFactory.createNodeData();
+        TermFactory tf = CSSFactory.getTermFactory();
+        ret.push(createDeclaration("display", tf.createIdent("block")));
+        return ret;
+    }
+    
+    /**
+     * Creates a style definition used for the body element.
+     * @return The body style definition.
+     */
+    protected NodeData createBodyStyle()
+    {
+        NodeData ret = createBlockStyle();
+        TermFactory tf = CSSFactory.getTermFactory();
+        ret.push(createDeclaration("background-color", tf.createColor(255, 255, 255)));
+        return ret;
+    }
+    
+    /**
      * Creates a style definition used for pages.
      * @return The page style definition.
      */
     protected NodeData createPageStyle()
     {
-        NodeData ret = CSSFactory.createNodeData();
+        NodeData ret = createBlockStyle();
         TermFactory tf = CSSFactory.getTermFactory();
         ret.push(createDeclaration("position", tf.createIdent("relative")));
 		ret.push(createDeclaration("border-width", tf.createLength(1f, Unit.px)));
