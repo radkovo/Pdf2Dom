@@ -90,10 +90,11 @@
 					</descriptors>
 					<archive>
 						<manifest>
-							<mainClass>org.fit.cssbox.swingbox.demo.SwingBrowser</mainClass>
+							<mainClass>org.fit.pdfdom.PDFToHTML</mainClass>
 						</manifest>
 					</archive>
-					<appendAssemblyId>true</appendAssemblyId>
+					<finalName>PDFToHTML</finalName>
+					<appendAssemblyId>false</appendAssemblyId>
 				</configuration>
 			</plugin>
 
@@ -153,7 +154,7 @@
 		<dependency>
 			<groupId>net.sf.cssbox</groupId>
 			<artifactId>cssbox</artifactId>
-			<version>4.4</version>
+			<version>4.5</version>
 		</dependency>
 		<dependency>
 		    <groupId>org.apache.pdfbox</groupId>

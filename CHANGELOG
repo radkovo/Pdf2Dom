@@ -1,0 +1,9 @@
+Pdf2DOM 1.2 (17 Feb 2014)
+- Converted to Maven
+
+Pdf2DOM 1.1 (5 Dec 2013)
+- Adapted to new CSSBox API (CSSBox 4.3)
+
+Pdf2DOM 1.0 (7 Oct 2011)
+- First public release
+ 
