@@ -47,8 +47,7 @@ public class PDFDomTree extends PDFBoxTree
 {
     /** Default style placed in the begining of the resulting document */
     protected String defaultStyle = ".page{position:relative; border:1px solid blue;margin:0.5em}\n" +
-    										   ".p,.r{position:absolute;}" +
-    										   ".p{direction:ltr;unicode-bidi:bidi-override}";
+    										   ".p,.r{position:absolute;}";
     
     /** The resulting document representing the PDF file. */
     protected Document doc;

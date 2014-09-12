@@ -516,7 +516,8 @@ public abstract class PDFBoxTree extends PDFTextStripper
             }
 
             //should we split the boxes?
-            boolean split = lastText == null || distx > 1 || distx < -6 || Math.abs(disty) > 1;
+            boolean split = lastText == null || distx > 1 || distx < -6 || Math.abs(disty) > 1
+                                || getTextDirectionality(text) != getTextDirectionality(lastText);
             //if the style changed, we should split the boxes
             updateStyle(style, text);
             if (!style.equals(curstyle))
@@ -544,7 +545,19 @@ public abstract class PDFBoxTree extends PDFTextStripper
     {
     	if (textLine.length() > 0)
     	{
-	        renderText(textLine.toString());
+            String s;
+    	    switch (Character.getDirectionality(textLine.charAt(0)))
+    	    {
+    	        case Character.DIRECTIONALITY_RIGHT_TO_LEFT:
+                case Character.DIRECTIONALITY_RIGHT_TO_LEFT_ARABIC:
+                case Character.DIRECTIONALITY_RIGHT_TO_LEFT_EMBEDDING:
+                case Character.DIRECTIONALITY_RIGHT_TO_LEFT_OVERRIDE:
+                    s = textLine.reverse().toString();
+                    
+                default:
+                    s = textLine.toString();
+    	    }
+	        renderText(s);
 	        textLine = new StringBuilder();
     	}
     }
@@ -739,6 +752,17 @@ public abstract class PDFBoxTree extends PDFTextStripper
         }
     }
 
+    protected byte getTextDirectionality(TextPosition text)
+    {
+        return getTextDirectionality(text.getCharacter());
+    }
     
+    protected byte getTextDirectionality(String s)
+    {
+        if (s.length() > 0)
+            return Character.getDirectionality(s.charAt(0));
+        else
+            return Character.DIRECTIONALITY_UNDEFINED;
+    }
     
 }
