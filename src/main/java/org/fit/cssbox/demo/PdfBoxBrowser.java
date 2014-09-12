@@ -30,7 +30,6 @@ import javax.swing.JFrame;
 import javax.swing.tree.DefaultTreeModel;
 
 import org.apache.pdfbox.exceptions.CryptographyException;
-import org.apache.pdfbox.exceptions.InvalidPasswordException;
 import org.apache.pdfbox.pdmodel.PDDocument;
 import org.fit.cssbox.layout.BrowserCanvas;
 import org.fit.cssbox.layout.Viewport;
@@ -107,21 +106,16 @@ public class PdfBoxBrowser extends org.fit.cssbox.demo.BoxBrowser
     {
         PDDocument document = null;
         document = PDDocument.load(is);
-        if( document.isEncrypted() )
+        if (document.isEncrypted())
         {
             try
             {
                 document.decrypt("");
             }
-            catch( InvalidPasswordException e )
+            catch(CryptographyException e)
             {
-                System.err.println( "Error: Document is encrypted with a password." );
-                System.exit( 1 );
-            }
-            catch( CryptographyException e )
-            {
-                System.err.println( "Error: Document is encrypted with a password." );
-                System.exit( 1 );
+                System.err.println("Error: Cryptography error:" + e.getMessage());
+                System.exit(1);
             }
         }
         return document;

@@ -23,7 +23,7 @@ import java.io.IOException;
 import java.io.PrintWriter;
 import java.io.Writer;
 
-import org.apache.pdfbox.exceptions.InvalidPasswordException;
+import org.apache.pdfbox.exceptions.CryptographyException;
 import org.apache.pdfbox.pdmodel.PDDocument;
 
 /**
@@ -61,16 +61,16 @@ public class PDFToHTML
             //document = PDDocument.load("test/RuleML-2010-Programme.pdf");
             //document = PDDocument.load("test/hassan.pdf");
             document = PDDocument.load(infile);
-            if( document.isEncrypted() )
+            if (document.isEncrypted())
             {
                 try
                 {
-                    document.decrypt( "" );
+                    document.decrypt("");
                 }
-                catch( InvalidPasswordException e )
+                catch (CryptographyException e)
                 {
-                    System.err.println( "Error: Document is encrypted with a password." );
-                    System.exit( 1 );
+                    System.err.println("Error: Cryptography error:" + e.getMessage());
+                    System.exit(1);
                 }
             }
             

@@ -33,7 +33,6 @@ import org.apache.pdfbox.cos.COSNumber;
 import org.apache.pdfbox.cos.COSStream;
 import org.apache.pdfbox.cos.COSString;
 import org.apache.pdfbox.exceptions.CryptographyException;
-import org.apache.pdfbox.exceptions.InvalidPasswordException;
 import org.apache.pdfbox.exceptions.WrappedIOException;
 import org.apache.pdfbox.pdmodel.PDDocument;
 import org.apache.pdfbox.pdmodel.PDPage;
@@ -167,10 +166,6 @@ public abstract class PDFBoxTree extends PDFTextStripper
             catch (CryptographyException e)
             {
                 throw new WrappedIOException("Error decrypting document, details: ", e);
-            }
-            catch (InvalidPasswordException e)
-            {
-                throw new WrappedIOException("Error: document is encrypted", e);
             }
         }
         
