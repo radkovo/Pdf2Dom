@@ -528,9 +528,13 @@ public abstract class PDFBoxTree extends PDFTextStripper
 	            curstyle.setLeft(cur_x);
 	            curstyle.setTop(cur_y - text.getFontSizeInPt());
             }
+            System.out.println("Char: " + text.getCharacter() + " " + text.getCharacter().length() + " u" + ((int) text.getCharacter().charAt(0)));
+            System.out.println("   P: " + text.getCodePoints());
             textLine.append(text.getCharacter());
             lastText = text;
         }
+        else
+            System.out.println("SKIP >" + ((int) text.getCharacter().charAt(0)) + "<");
     }    
     
     /**
@@ -552,6 +556,7 @@ public abstract class PDFBoxTree extends PDFTextStripper
                 default:
                     s = textLine.toString();
     	    }
+    	    System.out.println("Finish: " + s);
 	        renderText(s);
 	        textLine = new StringBuilder();
     	}
