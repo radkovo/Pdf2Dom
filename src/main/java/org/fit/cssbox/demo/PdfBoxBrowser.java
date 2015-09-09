@@ -58,7 +58,7 @@ public class PdfBoxBrowser extends org.fit.cssbox.demo.BoxBrowser
             urlText.setText(url.toString());
             
             URLConnection con = url.openConnection();
-            con.setRequestProperty("User-Agent", "Mozilla/5.0 (compatible; BoxBrowserTest/2.x; Linux) CSSBox/2.x (like Gecko)");
+            con.setRequestProperty("User-Agent", "Mozilla/5.0 (compatible; BoxBrowserTest/4.x; Linux) CSSBox/4.x (like Gecko)");
             InputStream is = con.getInputStream();
             url = con.getURL(); //update the URL after possible redirects
             
