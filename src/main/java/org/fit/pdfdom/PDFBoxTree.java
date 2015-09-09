@@ -23,8 +23,11 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.Vector;
 
 import org.apache.pdfbox.cos.COSBase;
@@ -88,6 +91,15 @@ public abstract class PDFBoxTree extends PDFTextStripper
     /** Current text coordinates (the coordinates of the last encountered text box). */
     protected float cur_y;
     
+    /** Current path construction position */
+    protected float path_x;
+    /** Current path construction position */
+    protected float path_y;
+    /** Starting path construction position */
+    protected float path_start_x;
+    /** Starting path construction position */
+    protected float path_start_y;
+    
     /** Previous positioned text. */
     protected TextPosition lastText = null;
     
@@ -95,7 +107,7 @@ public abstract class PDFBoxTree extends PDFTextStripper
     protected StringBuilder textLine;
 
     /** Current graphics path */
-    protected Vector<RectPath> graphicsPath;
+    protected Vector<PathSegment> graphicsPath;
 
     /** The style of the future box being modified by the operators */
     protected BoxStyle style;
@@ -128,7 +140,7 @@ public abstract class PDFBoxTree extends PDFTextStripper
         textLine = new StringBuilder();
         strokingColor = null;
         lineWidth = 0;
-        graphicsPath = new Vector<RectPath>();
+        graphicsPath = new Vector<PathSegment>();
         startPage = 0;
         endPage = Integer.MAX_VALUE;
     }
@@ -290,14 +302,11 @@ public abstract class PDFBoxTree extends PDFTextStripper
     
     /**
      * Adds a rectangle to the current page on the specified position.
-     * @param x the X coordinate of the rectangle
-     * @param y the Y coordinate of the rectangle
-     * @param width the width coordinate of the rectangle
-     * @param height the height coordinate of the rectangle
+     * @param rect the rectangle to be rendered
      * @param stroke should there be a stroke around?
      * @param fill should the rectangle be filled?
      */
-    protected abstract void renderRectangle(float x, float y, float width, float height, boolean stroke, boolean fill);
+    protected abstract void renderPath(List<PathSegment> path, boolean stroke, boolean fill);
     
     /**
      * Adds an image to the current page.
@@ -311,6 +320,31 @@ public abstract class PDFBoxTree extends PDFTextStripper
      */
     protected abstract void renderImage(float x, float y, float width, float height, String mimetype, byte[] data);
     
+    protected float[] toRectangle(List<PathSegment> path)
+    {
+        if (path.size() == 4)
+        {
+            Set<Float> xc = new HashSet<Float>();
+            Set<Float> yc = new HashSet<Float>();
+            //find x/y 1/2
+            for (PathSegment line : path)
+            {
+                xc.add(line.getX1());
+                xc.add(line.getX2());
+                yc.add(line.getY1());
+                yc.add(line.getY2());
+            }
+            if (xc.size() == 2 && yc.size() == 2)
+            {
+                return new float[]{Collections.min(xc), Collections.min(yc), Collections.max(xc), Collections.max(yc)};
+            }
+            else
+                return null; //two different X and Y coordinates required
+        }
+        else
+            return null; //four segments required
+    }
+    
     //===========================================================================================
     
     @Override
@@ -318,14 +352,14 @@ public abstract class PDFBoxTree extends PDFTextStripper
             throws IOException
     {
         String operation = operator.getOperation();
-        System.out.println("Operator: " + operation + ":" + arguments.size());
+        /*System.out.println("Operator: " + operation + ":" + arguments.size());
         if (operation.equals("sc") || operation.equals("cs"))
         {
             System.out.print("  ");
             for (int i = 0; i < arguments.size(); i++)
                 System.out.print(arguments.get(i) + " ");
             System.out.println();
-        }
+        }*/
 
         //set gray for nonstroking operations
         if (operation.equals("g"))
@@ -391,6 +425,42 @@ public abstract class PDFBoxTree extends PDFTextStripper
             style.setLetterSpacing(getLength(arguments.get(0)));
         }
 
+        //graphics
+        else if (operation.equals("m")) //move
+        {
+            if (!disableGraphics)
+            {
+                if (arguments.size() == 2)
+                {
+                    float[] pos = transformPosition(getLength(arguments.get(0)), getLength(arguments.get(1)));
+                    path_x = pos[0];
+                    path_y = pos[1];
+                    path_start_x = pos[0];
+                    path_start_y = pos[1];
+                }
+            }
+        }
+        else if (operation.equals("l")) //line
+        {
+            if (!disableGraphics)
+            {
+                if (arguments.size() == 2)
+                {
+                    float[] pos = transformPosition(getLength(arguments.get(0)), getLength(arguments.get(1)));
+                    graphicsPath.add(new PathSegment(path_x, path_y, pos[0], pos[1]));
+                    path_x = pos[0];
+                    path_y = pos[1];
+                }
+            }
+        }
+        else if (operation.equals("h")) //end subpath
+        {
+            if (!disableGraphics)
+            {
+                graphicsPath.add(new PathSegment(path_x, path_y, path_start_x, path_start_y));
+            }
+        }
+        
         //rectangle
         else if (operation.equals("re"))
         {
@@ -403,21 +473,13 @@ public abstract class PDFBoxTree extends PDFTextStripper
                 	float width = getLength(arguments.get(2));
                 	float height = getLength(arguments.get(3));
 
-                	Matrix spos = new Matrix();
-                	spos.setValue(2, 0, x);
-                    spos.setValue(2, 1, y);
-                    Matrix epos = new Matrix();
-                    epos.setValue(2, 0, x + width);
-                    epos.setValue(2, 1, y + height);
+                	float[] p1 = transformPosition(x, y);
+                	float[] p2 = transformPosition(x + width, y + height);
                 	
-                    Matrix ctm = getGraphicsState().getCurrentTransformationMatrix();
-                    Matrix sposXctm = spos.multiply(ctm); 
-                    Matrix eposXctm = epos.multiply(ctm);
-                    
-                    width = eposXctm.getXPosition() - sposXctm.getXPosition();
-                    height = eposXctm.getYPosition() - sposXctm.getYPosition();
-                	
-                    graphicsPath.add(new RectPath(sposXctm.getXPosition(), sposXctm.getYPosition(), width, height));
+                	graphicsPath.add(new PathSegment(p1[0], p1[1], p2[0], p1[1]));
+                    graphicsPath.add(new PathSegment(p2[0], p1[1], p2[0], p2[1]));
+                    graphicsPath.add(new PathSegment(p2[0], p2[1], p1[0], p2[1]));
+                    graphicsPath.add(new PathSegment(p1[0], p2[1], p1[0], p1[1]));
                 }
             }
         }
@@ -425,30 +487,33 @@ public abstract class PDFBoxTree extends PDFTextStripper
         //fill
         else if (operation.equals("f") || operation.equals("F") || operation.equals("f*"))
         {
-            for (RectPath rect : graphicsPath)
-            {
-                renderRectangle(rect.getX(), rect.getY(), rect.getWidth(), rect.getHeight(), false, true);
-            }
+            renderPath(graphicsPath, false, true);
             graphicsPath.removeAllElements();
         }
 
         //stroke
-        else if (operation.equals("s") || operation.equals("S"))
+        else if (operation.equals("S"))
         {
-            for (RectPath rect : graphicsPath)
-            {
-                renderRectangle(rect.getX(), rect.getY(), rect.getWidth(), rect.getHeight(), true, false);
-            }
+            renderPath(graphicsPath, true, false);
+            graphicsPath.removeAllElements();
+        }
+        else if (operation.equals("s"))
+        {
+            graphicsPath.add(new PathSegment(path_x, path_y, path_start_x, path_start_y));
+            renderPath(graphicsPath, true, false);
             graphicsPath.removeAllElements();
         }
 
         //stroke and fill
-        else if (operation.equals("B") || operation.equals("B*") || operation.equals("b") || operation.equals("b*"))
+        else if (operation.equals("B") || operation.equals("B*"))
         {
-            for (RectPath rect : graphicsPath)
-            {
-                renderRectangle(rect.getX(), rect.getY(), rect.getWidth(), rect.getHeight(), true, true);
-            }
+            renderPath(graphicsPath, true, true);
+            graphicsPath.removeAllElements();
+        }
+        else if (operation.equals("b") || operation.equals("b*"))
+        {
+            graphicsPath.add(new PathSegment(path_x, path_y, path_start_x, path_start_y));
+            renderPath(graphicsPath, true, true);
             graphicsPath.removeAllElements();
         }
         
@@ -507,8 +572,10 @@ public abstract class PDFBoxTree extends PDFTextStripper
         if (!text.getCharacter().trim().isEmpty())
         {
             //System.out.println("Text: " + text);
-        	cur_x = text.getX();
-            cur_y = text.getY();
+            float[] c = transformPosition(text.getX(), text.getY());
+            System.out.println("dir=" + text.getDir());
+            cur_x = c[0];
+            cur_y = c[1];
         	
             int distx = 0;
             int disty = 0;
@@ -560,9 +627,7 @@ public abstract class PDFBoxTree extends PDFTextStripper
                 default:
                     s = textLine.toString();
     	    }
-    	    System.out.println("Text: " + s);
-    	    if (s.equals("60"))
-    	        System.out.println("jo!");
+    	    //System.out.println("Text: " + s);
 	        renderText(s);
 	        textLine = new StringBuilder();
     	}
@@ -641,7 +706,7 @@ public abstract class PDFBoxTree extends PDFTextStripper
     //===========================================================================================
     
     /**
-     * Transforms a length according to a current transformation matrix.
+     * Transforms a length according to the current transformation matrix.
      */
     protected float transformLength(float w)
     {
@@ -649,6 +714,25 @@ public abstract class PDFBoxTree extends PDFTextStripper
     	Matrix m = new Matrix();
     	m.setValue(2, 0, w);
     	return m.multiply(ctm).getXPosition();
+    }
+    
+    /**
+     * Transforms a position according to the current transformation matrix.
+     * @param x
+     * @param y
+     * @return
+     */
+    protected float[] transformPosition(float x, float y)
+    {
+        Matrix spos = new Matrix();
+        spos.setValue(2, 0, x);
+        spos.setValue(2, 1, y);
+        
+        Matrix ctm = getGraphicsState().getCurrentTransformationMatrix();
+        Matrix sposXctm = spos.multiply(ctm); 
+        
+        //return new float[]{sposXctm.getXPosition(), sposXctm.getYPosition()};
+        return new float[]{x, y};
     }
     
     /**

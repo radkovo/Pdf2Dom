@@ -23,6 +23,7 @@ import java.awt.Dimension;
 import java.awt.Graphics2D;
 import java.io.IOException;
 import java.net.URL;
+import java.util.List;
 
 import javax.xml.parsers.ParserConfigurationException;
 
@@ -43,6 +44,7 @@ import org.fit.cssbox.layout.Viewport;
 import org.fit.cssbox.layout.VisualContext;
 import org.fit.pdfdom.BoxStyle;
 import org.fit.pdfdom.PDFDomTree;
+import org.fit.pdfdom.PathSegment;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.Text;
@@ -187,7 +189,12 @@ public class CSSBoxTree extends PDFDomTree
     }
 
     @Override
-    protected void renderRectangle(float x, float y, float width, float height, boolean stroke, boolean fill)
+    protected void renderPath(List<PathSegment> path, boolean stroke, boolean fill)
+    {
+        //TODO
+    }
+    
+    /*protected void renderRectangle(float x, float y, float width, float height, boolean stroke, boolean fill)
     {
         //DOM element
         Element el = createRectangleElement(x, y, width, height, stroke, fill);
@@ -196,7 +203,7 @@ public class CSSBoxTree extends PDFDomTree
         BlockBox block = createBlock(pagebox, el, false);
         block.setStyle(createRectangleStyle(x, y, width, height, stroke, fill));
         pagebox.addSubBox(block);
-    }
+    }*/
 
     @Override
     protected void renderImage(float x, float y, float width, float height, String mimetype, byte[] data)

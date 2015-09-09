@@ -21,6 +21,7 @@ package org.fit.pdfdom;
 
 import java.io.IOException;
 import java.io.Writer;
+import java.util.List;
 
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
@@ -185,12 +186,26 @@ public class PDFDomTree extends PDFBoxTree
     {
     	curpage.appendChild(createTextElement(data));
     }
-    
+
     @Override
-    protected void renderRectangle(float x, float y, float width, float height, boolean stroke, boolean fill)
+    protected void renderPath(List<PathSegment> path, boolean stroke, boolean fill)
     {
-    	curpage.appendChild(createRectangleElement(x, y, width, height, stroke, fill));
+        float[] rect = toRectangle(path);
+        if (rect != null)
+        {
+            System.err.println("YES a rectangle");
+            curpage.appendChild(createRectangleElement(rect[0], rect[1], rect[2]-rect[0], rect[3]-rect[1], stroke, fill));
+        }
+        else
+        {
+            System.err.println("NOT a rectangle");
+        }
     }
+    
+    /*protected void renderRectangle(RectPath rect, boolean stroke, boolean fill)
+    {
+    	curpage.appendChild(createRectangleElement(rect.getX(), rect.getY(), rect.getWidth(), rect.getHeight(), stroke, fill));
+    }*/
     
     @Override
     protected void renderImage(float x, float y, float width, float height, String mimetype, byte[] data)
@@ -210,8 +225,13 @@ public class PDFDomTree extends PDFBoxTree
         PDRectangle layout = getCurrentMediaBox();
         if (layout != null)
         {
-            pstyle = "width:" + layout.getUpperRightX() + UNIT + ";"
-                     + "height:" + layout.getUpperRightY() + UNIT;
+            System.out.println("x1 " + layout.getLowerLeftX());
+            System.out.println("y1 " + layout.getLowerLeftY());
+            System.out.println("x2 " + layout.getUpperRightX());
+            System.out.println("y2 " + layout.getUpperRightY());
+            System.out.println("rot " + pdpage.findRotation());
+            pstyle = "width:" + layout.getUpperRightY() + UNIT + ";"
+                     + "height:" + layout.getUpperRightX() + UNIT;
         }
         else
             System.err.println("Warning: no media box found");
@@ -267,7 +287,7 @@ public class PDFDomTree extends PDFBoxTree
 
     	StringBuilder pstyle = new StringBuilder(50);
     	pstyle.append("left:").append(style.formatLength(x)).append(';');
-        pstyle.append("bottom:").append(style.formatLength(y)).append(';');
+        pstyle.append("top:").append(style.formatLength(y)).append(';');
         pstyle.append("width:").append(style.formatLength(width)).append(';');
         pstyle.append("height:").append(style.formatLength(height)).append(';');
     	    
@@ -307,7 +327,7 @@ public class PDFDomTree extends PDFBoxTree
     {
         StringBuilder pstyle = new StringBuilder("position:absolute;");
         pstyle.append("left:").append(x).append(UNIT).append(';');
-        pstyle.append("bottom:").append(y).append(UNIT).append(';');
+        pstyle.append("top:").append(y).append(UNIT).append(';');
         pstyle.append("width:").append(width).append(UNIT).append(';');
         pstyle.append("height:").append(height).append(UNIT).append(';');
         //pstyle.append("border:1px solid red;");
