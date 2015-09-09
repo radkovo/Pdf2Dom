@@ -318,7 +318,14 @@ public abstract class PDFBoxTree extends PDFTextStripper
             throws IOException
     {
         String operation = operator.getOperation();
-        //System.out.println("Operator: " + operation + ":" + arguments.size());
+        System.out.println("Operator: " + operation + ":" + arguments.size());
+        if (operation.equals("sc") || operation.equals("cs"))
+        {
+            System.out.print("  ");
+            for (int i = 0; i < arguments.size(); i++)
+                System.out.print(arguments.get(i) + " ");
+            System.out.println();
+        }
 
         //set gray for nonstroking operations
         if (operation.equals("g"))
@@ -349,7 +356,7 @@ public abstract class PDFBoxTree extends PDFTextStripper
         }
 
         //set color depending on the color model
-        else if (operation.equals("scn")) // TODO: rgb only for now 
+        else if (operation.equals("scn") || operation.equals("sc")) // TODO: rgb only for now 
         {
             if (arguments.size() == 3)
             {
@@ -360,7 +367,7 @@ public abstract class PDFBoxTree extends PDFTextStripper
             else
                 System.err.println("Warning: scn: unsupported color specification: " + arguments);
         }
-        else if (operation.equals("SCN")) // TODO: rgb only for now 
+        else if (operation.equals("SCN") || operation.equals("SC")) // TODO: rgb only for now 
         {
             if (arguments.size() == 3)
             {
@@ -499,6 +506,7 @@ public abstract class PDFBoxTree extends PDFTextStripper
     {
         if (!text.getCharacter().trim().isEmpty())
         {
+            //System.out.println("Text: " + text);
         	cur_x = text.getX();
             cur_y = text.getY();
         	
@@ -552,6 +560,9 @@ public abstract class PDFBoxTree extends PDFTextStripper
                 default:
                     s = textLine.toString();
     	    }
+    	    System.out.println("Text: " + s);
+    	    if (s.equals("60"))
+    	        System.out.println("jo!");
 	        renderText(s);
 	        textLine = new StringBuilder();
     	}
