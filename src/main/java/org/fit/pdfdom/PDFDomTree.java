@@ -195,7 +195,7 @@ public class PDFDomTree extends PDFBoxTree
         {
             curpage.appendChild(createRectangleElement(rect[0], rect[1], rect[2]-rect[0], rect[3]-rect[1], stroke, fill));
         }
-        else
+        else if (stroke)
         {
             for (PathSegment segm : path)
             {
@@ -225,11 +225,11 @@ public class PDFDomTree extends PDFBoxTree
         PDRectangle layout = getCurrentMediaBox();
         if (layout != null)
         {
-            System.out.println("x1 " + layout.getLowerLeftX());
+            /*System.out.println("x1 " + layout.getLowerLeftX());
             System.out.println("y1 " + layout.getLowerLeftY());
             System.out.println("x2 " + layout.getUpperRightX());
             System.out.println("y2 " + layout.getUpperRightY());
-            System.out.println("rot " + pdpage.findRotation());
+            System.out.println("rot " + pdpage.findRotation());*/
             
             float w = layout.getWidth();
             float h = layout.getHeight();
@@ -239,13 +239,7 @@ public class PDFDomTree extends PDFBoxTree
                 float x = w; w = h; h = x;
             }
             
-            /*float[] ll = transformPosition(layout.getLowerLeftX(), layout.getLowerLeftY());
-            float[] ur = transformPosition(layout.getUpperRightX(), layout.getUpperRightY());
-            float w = Math.abs(ur[0] - ll[0]);
-            float h = Math.abs(ur[1] - ll[1]);*/
-            
-            pstyle = "width:" + w + UNIT + ";"
-                     + "height:" + h + UNIT;
+            pstyle = "width:" + w + UNIT + ";" + "height:" + h + UNIT;
         }
         else
             System.err.println("Warning: no media box found");
@@ -327,6 +321,14 @@ public class PDFDomTree extends PDFBoxTree
         return el;
     }
 
+    /**
+     * Create an element that represents a horizntal or vertical line.
+     * @param x1
+     * @param y1
+     * @param x2
+     * @param y2
+     * @return the created DOM element
+     */
     protected Element createLineElement(float x1, float y1, float x2, float y2)
     {
         String color = "black";

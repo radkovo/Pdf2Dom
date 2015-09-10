@@ -191,7 +191,35 @@ public class CSSBoxTree extends PDFDomTree
     @Override
     protected void renderPath(List<PathSegment> path, boolean stroke, boolean fill)
     {
-        //TODO
+        float[] rect = toRectangle(path);
+        if (rect != null)
+        {
+            //DOM element
+            Element el = createRectangleElement(rect[0], rect[1], rect[2]-rect[0], rect[3]-rect[1], stroke, fill);
+            curpage.appendChild(el);
+            //Block box
+            BlockBox block = createBlock(pagebox, el, false);
+            block.setStyle(createRectangleStyle(rect[0], rect[1], rect[2]-rect[0], rect[3]-rect[1], stroke, fill));
+            pagebox.addSubBox(block);
+        }
+        else if (stroke)
+        {
+            for (PathSegment segm : path)
+            {
+                if (segm.getX1() == segm.getX2() || segm.getY1() == segm.getY2())
+                {
+                    //DOM element
+                    Element el = createLineElement(segm.getX1(), segm.getY1(), segm.getX2(), segm.getY2());
+                    curpage.appendChild(el);
+                    //Block box
+                    BlockBox block = createBlock(pagebox, el, false);
+                    block.setStyle(createLineStyle(segm.getX1(), segm.getY1(), segm.getX2(), segm.getY2()));
+                    pagebox.addSubBox(block);
+                }
+                else
+                    System.err.println("Skipped non-orthogonal line segment");
+            }
+        }
     }
     
     /*protected void renderRectangle(float x, float y, float width, float height, boolean stroke, boolean fill)
@@ -356,8 +384,16 @@ public class CSSBoxTree extends PDFDomTree
         PDRectangle layout = getCurrentMediaBox();
         if (layout != null)
         {
-            ret.push(createDeclaration("width", tf.createLength(layout.getUpperRightX(), unit)));
-            ret.push(createDeclaration("height", tf.createLength(layout.getUpperRightY(), unit)));
+            float w = layout.getWidth();
+            float h = layout.getHeight();
+            final int rot = pdpage.findRotation();
+            if (rot == 90 || rot == 270)
+            {
+                float x = w; w = h; h = x;
+            }
+            
+            ret.push(createDeclaration("width", tf.createLength(w, unit)));
+            ret.push(createDeclaration("height", tf.createLength(h, unit)));
         }
         else
             System.err.println("Warning: no media box found");
@@ -381,7 +417,7 @@ public class CSSBoxTree extends PDFDomTree
         TermFactory tf = CSSFactory.getTermFactory();
         ret.push(createDeclaration("position", tf.createIdent("absolute")));
         ret.push(createDeclaration("left", tf.createLength(x, unit)));
-        ret.push(createDeclaration("bottom", tf.createLength(y, unit)));
+        ret.push(createDeclaration("top", tf.createLength(y, unit)));
         ret.push(createDeclaration("width", tf.createLength(width, unit)));
         ret.push(createDeclaration("height", tf.createLength(height, unit)));
         
@@ -403,6 +439,47 @@ public class CSSBoxTree extends PDFDomTree
             if (color != null)
                 ret.push(createDeclaration("background-color", tf.createColor(color)));
         }
+
+        return ret;
+    }
+    
+    protected NodeData createLineStyle(float x1, float y1, float x2, float y2)
+    {
+        float x = Math.min(x1, x2);
+        float y = Math.min(y1, y2);
+        float width = Math.abs(x2 - x1);
+        float height = Math.abs(y2 - y1);
+
+        String bside;
+        lineWidth = transformLength((float) getGraphicsState().getLineWidth());
+        if (width == 0)
+        {
+            y += lineWidth / 2;
+            height -= lineWidth;
+            bside = "border-left";
+        }
+        else
+        {
+            x += lineWidth / 2;
+            width -= lineWidth / 2;
+            bside = "border-top";
+        }
+        
+        NodeData ret = CSSFactory.createNodeData();
+        TermFactory tf = CSSFactory.getTermFactory();
+        ret.push(createDeclaration("position", tf.createIdent("absolute")));
+        ret.push(createDeclaration("left", tf.createLength(x, unit)));
+        ret.push(createDeclaration("top", tf.createLength(y, unit)));
+        ret.push(createDeclaration("width", tf.createLength(width, unit)));
+        ret.push(createDeclaration("height", tf.createLength(height, unit)));
+        
+        if (lineWidth == 0)
+            ret.push(createDeclaration(bside + "-width", tf.createLength(1f, Unit.px)));
+        else
+            ret.push(createDeclaration(bside + "-width", tf.createLength(lineWidth, unit)));
+        ret.push(createDeclaration(bside + "-style", tf.createIdent("solid")));
+        String color = (strokingColor == null) ? "#000000" : strokingColor;
+        ret.push(createDeclaration(bside + "-color", tf.createColor(color)));
 
         return ret;
     }
