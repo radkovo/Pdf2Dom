@@ -193,19 +193,19 @@ public class PDFDomTree extends PDFBoxTree
         float[] rect = toRectangle(path);
         if (rect != null)
         {
-            System.err.println("YES a rectangle");
             curpage.appendChild(createRectangleElement(rect[0], rect[1], rect[2]-rect[0], rect[3]-rect[1], stroke, fill));
         }
         else
         {
-            System.err.println("NOT a rectangle");
+            for (PathSegment segm : path)
+            {
+                if (segm.getX1() == segm.getX2() || segm.getY1() == segm.getY2())
+                    curpage.appendChild(createLineElement(segm.getX1(), segm.getY1(), segm.getX2(), segm.getY2()));
+                else
+                    System.err.println("Skipped non-orthogonal line segment");
+            }
         }
     }
-    
-    /*protected void renderRectangle(RectPath rect, boolean stroke, boolean fill)
-    {
-    	curpage.appendChild(createRectangleElement(rect.getX(), rect.getY(), rect.getWidth(), rect.getHeight(), stroke, fill));
-    }*/
     
     @Override
     protected void renderImage(float x, float y, float width, float height, String mimetype, byte[] data)
@@ -327,6 +327,48 @@ public class PDFDomTree extends PDFBoxTree
         return el;
     }
 
+    protected Element createLineElement(float x1, float y1, float x2, float y2)
+    {
+        String color = "black";
+        if (strokingColor != null)
+            color = strokingColor;
+
+        float x = Math.min(x1, x2);
+        float y = Math.min(y1, y2);
+        float width = Math.abs(x2 - x1);
+        float height = Math.abs(y2 - y1);
+        
+        String bname;
+        lineWidth = transformLength((float) getGraphicsState().getLineWidth());
+        if (width == 0)
+        {
+            y += lineWidth / 2;
+            height -= lineWidth;
+            bname = "border-left";
+        }
+        else
+        {
+            x += lineWidth / 2;
+            width -= lineWidth / 2;
+            bname = "border-top";
+        }
+        
+        StringBuilder pstyle = new StringBuilder(50);
+        pstyle.append("left:").append(style.formatLength(x)).append(';');
+        pstyle.append("top:").append(style.formatLength(y)).append(';');
+        pstyle.append("width:").append(style.formatLength(width)).append(';');
+        pstyle.append("height:").append(style.formatLength(height)).append(';');
+            
+        String lw = lineWidth == 0 ? "1px" : lineWidth + "pt";
+        pstyle.append(bname).append(":").append(lw).append(" solid ").append(color).append(';');
+            
+        Element el = doc.createElement("div");
+        el.setAttribute("class", "r");
+        el.setAttribute("style", pstyle.toString());
+        el.appendChild(doc.createEntityReference("nbsp"));
+        return el;
+    }
+    
     /**
      * Creates an element that represents an image drawn at the specified coordinates in the page.
      * @param x the X coordinate of the image

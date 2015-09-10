@@ -589,7 +589,7 @@ public abstract class PDFBoxTree extends PDFTextStripper
         {
             //System.out.println("Text: " + text);
             float[] c = transformPosition(text.getX(), text.getY());
-            System.out.println("dir=" + text.getDir());
+            //System.out.println("dir=" + text.getDir());
             cur_x = c[0];
             cur_y = c[1];
         	
