@@ -230,8 +230,22 @@ public class PDFDomTree extends PDFBoxTree
             System.out.println("x2 " + layout.getUpperRightX());
             System.out.println("y2 " + layout.getUpperRightY());
             System.out.println("rot " + pdpage.findRotation());
-            pstyle = "width:" + layout.getUpperRightY() + UNIT + ";"
-                     + "height:" + layout.getUpperRightX() + UNIT;
+            
+            float w = layout.getWidth();
+            float h = layout.getHeight();
+            final int rot = pdpage.findRotation();
+            if (rot == 90 || rot == 270)
+            {
+                float x = w; w = h; h = x;
+            }
+            
+            /*float[] ll = transformPosition(layout.getLowerLeftX(), layout.getLowerLeftY());
+            float[] ur = transformPosition(layout.getUpperRightX(), layout.getUpperRightY());
+            float w = Math.abs(ur[0] - ll[0]);
+            float h = Math.abs(ur[1] - ll[1]);*/
+            
+            pstyle = "width:" + w + UNIT + ";"
+                     + "height:" + h + UNIT;
         }
         else
             System.err.println("Warning: no media box found");

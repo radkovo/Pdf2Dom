@@ -19,6 +19,8 @@
  */
 package org.fit.pdfdom;
 
+import java.awt.geom.AffineTransform;
+import java.awt.geom.NoninvertibleTransformException;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -537,6 +539,7 @@ public abstract class PDFBoxTree extends PDFTextStripper
                     byte[] data = getImageData(image);
                     
                     Matrix ctm = getGraphicsState().getCurrentTransformationMatrix();
+                    ctm = ctm.multiply(createUnrotationMatrix());
                     float x = ctm.getXPosition();
                     float y = ctm.getYPosition();
                     float width = ctm.getXScale();
@@ -552,6 +555,19 @@ public abstract class PDFBoxTree extends PDFTextStripper
                         y -= height;
                     }
                     
+                    switch (pdpage.findRotation())
+                    {
+                        case 90:
+                            y = -y;
+                            break;
+                        case 180:
+                            x = -x;
+                            break;
+                        case 270:
+                            x = -x; y = -y;
+                            break;
+                    }
+
                     String mime;
                     if (image.getSuffix().equalsIgnoreCase("jpg") || image.getSuffix().equalsIgnoreCase("jpeg"))
                         mime = "image/jpeg";
@@ -703,6 +719,31 @@ public abstract class PDFBoxTree extends PDFTextStripper
         return layout;
     }
     
+    /**
+     * Creates an unrotation matrix from the givent transformation matrix.
+     * @param ctm the transformation matrix
+     * @return the unrotation matrix or {@code null} when something fails.
+     */
+    protected Matrix createUnrotationMatrix()
+    {
+        try
+        {
+            double rotationInRadians = (pdpage.findRotation() * Math.PI) / 180;
+
+            AffineTransform rotation = new AffineTransform();
+            rotation.setToRotation(rotationInRadians);
+            AffineTransform rotationInverse = rotation.createInverse();
+            Matrix rotationInverseMatrix = new Matrix();
+            rotationInverseMatrix.setFromAffineTransform(rotationInverse);
+
+            return rotationInverseMatrix;
+            
+        } catch (NoninvertibleTransformException e) {
+            e.printStackTrace();
+            return null;
+        }
+    }
+    
     //===========================================================================================
     
     /**
@@ -730,9 +771,26 @@ public abstract class PDFBoxTree extends PDFTextStripper
         
         Matrix ctm = getGraphicsState().getCurrentTransformationMatrix();
         Matrix sposXctm = spos.multiply(ctm); 
+        Matrix ret = sposXctm.multiply(createUnrotationMatrix());
+        
+        float rx = ret.getXPosition();
+        float ry = ret.getYPosition();
+        switch (pdpage.findRotation())
+        {
+            case 90:
+                ry = -ry;
+                break;
+            case 180:
+                rx = -rx;
+                break;
+            case 270:
+                rx = -rx; ry = -ry;
+                break;
+        }
         
         //return new float[]{sposXctm.getXPosition(), sposXctm.getYPosition()};
-        return new float[]{x, y};
+        return new float[]{rx, ry};
+        //return new float[]{x, y};
     }
     
     /**
