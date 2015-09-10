@@ -34,6 +34,8 @@ import org.apache.pdfbox.pdmodel.PDDocument;
 import org.fit.cssbox.layout.BrowserCanvas;
 import org.fit.cssbox.layout.Viewport;
 import org.fit.cssbox.pdf.PdfBrowserCanvas;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.w3c.dom.Document;
 
 /**
@@ -44,6 +46,7 @@ import org.w3c.dom.Document;
  */
 public class PdfBoxBrowser extends org.fit.cssbox.demo.BoxBrowser
 {
+    private static Logger log = LoggerFactory.getLogger(PdfBoxBrowser.class);
 
     @Override
     public URL displayURL(String urlstring)
@@ -62,7 +65,7 @@ public class PdfBoxBrowser extends org.fit.cssbox.demo.BoxBrowser
             InputStream is = con.getInputStream();
             url = con.getURL(); //update the URL after possible redirects
             
-            System.out.println("Parsing PDF: " + url);
+            log.info("Parsing PDF: " + url);
             PDDocument doc = loadPdf(is);
             
             is.close();
@@ -95,7 +98,7 @@ public class PdfBoxBrowser extends org.fit.cssbox.demo.BoxBrowser
             return url;
             
         } catch (Exception e) {
-            System.err.println("*** Error: "+e.getMessage());
+            log.error(e.getMessage());
             e.printStackTrace();
             return null;
         }
@@ -114,7 +117,7 @@ public class PdfBoxBrowser extends org.fit.cssbox.demo.BoxBrowser
             }
             catch(CryptographyException e)
             {
-                System.err.println("Error: Cryptography error:" + e.getMessage());
+                log.error("Cryptography error:" + e.getMessage());
                 System.exit(1);
             }
         }

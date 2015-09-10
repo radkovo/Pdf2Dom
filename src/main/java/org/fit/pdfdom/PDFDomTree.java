@@ -30,6 +30,8 @@ import javax.xml.parsers.ParserConfigurationException;
 import org.apache.pdfbox.exceptions.WrappedIOException;
 import org.apache.pdfbox.pdmodel.PDDocument;
 import org.apache.pdfbox.pdmodel.common.PDRectangle;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.w3c.dom.Document;
 import org.w3c.dom.DocumentType;
 import org.w3c.dom.Element;
@@ -46,6 +48,8 @@ import org.w3c.dom.ls.LSSerializer;
  */
 public class PDFDomTree extends PDFBoxTree
 {
+    private static Logger log = LoggerFactory.getLogger(PDFDomTree.class);
+    
     /** Default style placed in the begining of the resulting document */
     protected String defaultStyle = ".page{position:relative; border:1px solid blue;margin:0.5em}\n" +
     										   ".p,.r{position:absolute;}";
@@ -202,7 +206,7 @@ public class PDFDomTree extends PDFBoxTree
                 if (segm.getX1() == segm.getX2() || segm.getY1() == segm.getY2())
                     curpage.appendChild(createLineElement(segm.getX1(), segm.getY1(), segm.getX2(), segm.getY2()));
                 else
-                    System.err.println("Skipped non-orthogonal line segment");
+                    log.warn("Skipped non-orthogonal line segment");
             }
         }
     }
@@ -242,7 +246,7 @@ public class PDFDomTree extends PDFBoxTree
             pstyle = "width:" + w + UNIT + ";" + "height:" + h + UNIT;
         }
         else
-            System.err.println("Warning: no media box found");
+            log.warn("No media box found");
         
         Element el = doc.createElement("div");
         el.setAttribute("id", "page_" + (pagecnt++));

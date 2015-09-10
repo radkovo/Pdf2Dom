@@ -32,6 +32,8 @@ import org.fit.cssbox.css.DOMAnalyzer;
 import org.fit.cssbox.layout.BrowserCanvas;
 import org.fit.cssbox.layout.VisualContext;
 import org.fit.cssbox.render.GraphicsRenderer;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.w3c.dom.Element;
 
 /**
@@ -41,6 +43,8 @@ import org.w3c.dom.Element;
  */
 public class PdfBrowserCanvas extends BrowserCanvas
 {
+    private static Logger log = LoggerFactory.getLogger(PdfBrowserCanvas.class);
+    
     private static final long serialVersionUID = -8053836572208370866L;
     
     protected PDDocument pdfdocument;
@@ -155,7 +159,7 @@ public class PdfBrowserCanvas extends BrowserCanvas
                     img = new BufferedImage(dim.width, dim.height, BufferedImage.TYPE_INT_RGB);
                 Graphics2D ig = img.createGraphics();
                 
-                System.err.println("Creating PDF boxes");
+                log.info("Creating PDF boxes");
                 VisualContext ctx = new VisualContext(null, null);
                 
                 boxtree = new CSSBoxTree(ig, ctx, dim, baseurl);
@@ -163,16 +167,16 @@ public class PdfBrowserCanvas extends BrowserCanvas
                 boxtree.processDocument(pdfdocument, startPage, endPage);
                 viewport = boxtree.getViewport();
                 root = boxtree.getDocument().getDocumentElement();
-                System.err.println("We have " + boxtree.getLastId() + " boxes");
+                log.info("We have " + boxtree.getLastId() + " boxes");
                 viewport.initSubtree();
                 
-                System.err.println("Layout for "+dim.width+"px");
+                log.info("Layout for "+dim.width+"px");
                 viewport.doLayout(dim.width, true, true);
-                System.err.println("Resulting size: " + viewport.getWidth() + "x" + viewport.getHeight() + " (" + viewport + ")");
+                log.info("Resulting size: " + viewport.getWidth() + "x" + viewport.getHeight() + " (" + viewport + ")");
         
-                System.err.println("Updating viewport size");
+                log.info("Updating viewport size");
                 viewport.updateBounds(dim);
-                System.err.println("Resulting size: " + viewport.getWidth() + "x" + viewport.getHeight() + " (" + viewport + ")");
+                log.info("Resulting size: " + viewport.getWidth() + "x" + viewport.getHeight() + " (" + viewport + ")");
                 
                 if (createImage && (viewport.getWidth() > dim.width || viewport.getHeight() > dim.height))
                 {
@@ -182,7 +186,7 @@ public class PdfBrowserCanvas extends BrowserCanvas
                     ig = img.createGraphics();
                 }
                 
-                System.err.println("Positioning for "+img.getWidth()+"x"+img.getHeight()+"px");
+                log.info("Positioning for "+img.getWidth()+"x"+img.getHeight()+"px");
                 viewport.absolutePositions();
                 
                 clearCanvas();

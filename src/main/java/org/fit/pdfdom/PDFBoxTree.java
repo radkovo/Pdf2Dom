@@ -51,6 +51,8 @@ import org.apache.pdfbox.util.Matrix;
 import org.apache.pdfbox.util.PDFOperator;
 import org.apache.pdfbox.util.PDFTextStripper;
 import org.apache.pdfbox.util.TextPosition;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * A generic tree of boxes created from a PDF file. It processes the PDF document and calls
@@ -62,6 +64,8 @@ import org.apache.pdfbox.util.TextPosition;
  */
 public abstract class PDFBoxTree extends PDFTextStripper
 {
+    private static Logger log = LoggerFactory.getLogger(PDFBoxTree.class);
+    
     /** Length units used in the generated CSS */
     public static final String UNIT = "pt";
 	
@@ -401,7 +405,7 @@ public abstract class PDFBoxTree extends PDFTextStripper
                         floatValue(arguments.get(2))));
             }
             else
-                System.err.println("Warning: scn: unsupported color specification: " + arguments);
+                log.warn("scn: unsupported color specification: " + arguments);
         }
         else if (operation.equals("SCN") || operation.equals("SC")) // TODO: rgb only for now 
         {
@@ -412,7 +416,7 @@ public abstract class PDFBoxTree extends PDFTextStripper
                                             floatValue(arguments.get(2)));
             }
             else
-                System.err.println("Warning: SCN: unsupported color specification: " + arguments);
+                log.warn("SCN: unsupported color specification: " + arguments);
         }
 
         //word spacing

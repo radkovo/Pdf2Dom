@@ -45,6 +45,8 @@ import org.fit.cssbox.layout.VisualContext;
 import org.fit.pdfdom.BoxStyle;
 import org.fit.pdfdom.PDFDomTree;
 import org.fit.pdfdom.PathSegment;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.Text;
@@ -59,6 +61,8 @@ import org.w3c.dom.Text;
  */
 public class CSSBoxTree extends PDFDomTree
 {
+    private static Logger log = LoggerFactory.getLogger(PDFDomTree.class);
+
     /** Scale factor for unknown fonts - it is used to prevent overlaping the boxes when an inappropriate font is used */
     protected float unknownFontScale = 0.95f;
     
@@ -217,7 +221,7 @@ public class CSSBoxTree extends PDFDomTree
                     pagebox.addSubBox(block);
                 }
                 else
-                    System.err.println("Skipped non-orthogonal line segment");
+                    log.warn("Skipped non-orthogonal line segment");
             }
         }
     }
@@ -396,7 +400,7 @@ public class CSSBoxTree extends PDFDomTree
             ret.push(createDeclaration("height", tf.createLength(h, unit)));
         }
         else
-            System.err.println("Warning: no media box found");
+            log.warn("No media box found");
         
         return ret;
     }
