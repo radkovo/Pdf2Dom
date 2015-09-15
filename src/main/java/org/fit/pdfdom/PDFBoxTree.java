@@ -591,12 +591,20 @@ public abstract class PDFBoxTree extends PDFTextStripper
     {
         if (!text.getCharacter().trim().isEmpty())
         {
-            //System.out.println("Text: " + text);
-            float[] c = transformPosition(text.getX(), text.getY());
-            //System.out.println("dir=" + text.getDir());
+            /*float[] c = transformPosition(text.getX(), text.getY());
             cur_x = c[0];
-            cur_y = c[1];
-        	
+            cur_y = c[1];*/
+            cur_x = text.getX();
+            cur_y = text.getY();
+
+            /*System.out.println("Text: " + text.getCharacter());
+            System.out.println(" Font size: " + text.getFontSize() + " " + text.getFontSizeInPt() + "pt");
+            System.out.println(" Width: " + text.getWidth());
+            System.out.println(" Width adj: " + text.getWidthDirAdj());
+            System.out.println(" Height: " + text.getHeight());
+            System.out.println(" XScale: " + text.getXScale());*/
+            
+            
             int distx = 0;
             int disty = 0;
             if (lastText != null)
@@ -605,9 +613,12 @@ public abstract class PDFBoxTree extends PDFTextStripper
                 disty = (int) (text.getY() - lastText.getY());
             }
 
+            if (lastText != null)
+                System.out.println("dir " + getTextDirectionality(text) + " " + getTextDirectionality(lastText));
+            
             //should we split the boxes?
             boolean split = lastText == null || distx > 1 || distx < -6 || Math.abs(disty) > 1
-                                || getTextDirectionality(text) != getTextDirectionality(lastText);
+                                || isReversed(getTextDirectionality(text)) != isReversed(getTextDirectionality(lastText));
             //if the style changed, we should split the boxes
             updateStyle(style, text);
             if (!style.equals(curstyle))
@@ -636,21 +647,34 @@ public abstract class PDFBoxTree extends PDFTextStripper
     	if (textLine.length() > 0)
     	{
             String s;
-    	    switch (Character.getDirectionality(textLine.charAt(0)))
-    	    {
-    	        case Character.DIRECTIONALITY_RIGHT_TO_LEFT:
-                case Character.DIRECTIONALITY_RIGHT_TO_LEFT_ARABIC:
-                case Character.DIRECTIONALITY_RIGHT_TO_LEFT_EMBEDDING:
-                case Character.DIRECTIONALITY_RIGHT_TO_LEFT_OVERRIDE:
-                    s = textLine.reverse().toString();
-                    
-                default:
-                    s = textLine.toString();
-    	    }
+            if (isReversed(Character.getDirectionality(textLine.charAt(0))))
+                s = textLine.reverse().toString();
+            else
+                s = textLine.toString();
     	    //System.out.println("Text: " + s);
 	        renderText(s);
 	        textLine = new StringBuilder();
     	}
+    }
+    
+    /**
+     * Checks whether the text directionality corresponds to reversed text (very rough) 
+     * @param directionality the Character.directionality
+     * @return
+     */
+    protected boolean isReversed(byte directionality)
+    {
+        switch (directionality)
+        {
+            case Character.DIRECTIONALITY_RIGHT_TO_LEFT:
+            case Character.DIRECTIONALITY_RIGHT_TO_LEFT_ARABIC:
+            case Character.DIRECTIONALITY_RIGHT_TO_LEFT_EMBEDDING:
+            case Character.DIRECTIONALITY_RIGHT_TO_LEFT_OVERRIDE:
+                return true;
+                
+            default:
+                return false;
+        }
     }
     
     /**
