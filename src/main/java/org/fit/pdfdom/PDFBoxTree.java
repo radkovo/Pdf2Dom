@@ -112,6 +112,9 @@ public abstract class PDFBoxTree extends PDFTextStripper
     /** The text box currently being created. */
     protected StringBuilder textLine;
 
+    /** Total text line width */
+    protected float textLineWidth;
+    
     /** Current graphics path */
     protected Vector<PathSegment> graphicsPath;
 
@@ -144,6 +147,7 @@ public abstract class PDFBoxTree extends PDFTextStripper
     {
         style = new BoxStyle(UNIT);
         textLine = new StringBuilder();
+        textLineWidth = 0;
         strokingColor = null;
         lineWidth = 0;
         graphicsPath = new Vector<PathSegment>();
@@ -304,7 +308,7 @@ public abstract class PDFBoxTree extends PDFTextStripper
      * in the {@link PDFBoxTree#curstyle} property. 
      * @param data The text contents.
      */
-    protected abstract void renderText(String data);
+    protected abstract void renderText(String data, float width);
     
     /**
      * Adds a rectangle to the current page on the specified position.
@@ -604,7 +608,6 @@ public abstract class PDFBoxTree extends PDFTextStripper
             System.out.println(" Height: " + text.getHeight());
             System.out.println(" XScale: " + text.getXScale());*/
             
-            
             int distx = 0;
             int disty = 0;
             if (lastText != null)
@@ -613,9 +616,6 @@ public abstract class PDFBoxTree extends PDFTextStripper
                 disty = (int) (text.getY() - lastText.getY());
             }
 
-            if (lastText != null)
-                System.out.println("dir " + getTextDirectionality(text) + " " + getTextDirectionality(lastText));
-            
             //should we split the boxes?
             boolean split = lastText == null || distx > 1 || distx < -6 || Math.abs(disty) > 1
                                 || isReversed(getTextDirectionality(text)) != isReversed(getTextDirectionality(lastText));
@@ -635,6 +635,7 @@ public abstract class PDFBoxTree extends PDFTextStripper
 	            curstyle.setTop(cur_y - text.getFontSizeInPt());
             }
             textLine.append(text.getCharacter());
+            textLineWidth += text.getWidth();
             lastText = text;
         }
     }    
@@ -652,8 +653,9 @@ public abstract class PDFBoxTree extends PDFTextStripper
             else
                 s = textLine.toString();
     	    //System.out.println("Text: " + s);
-	        renderText(s);
+	        renderText(s, textLineWidth);
 	        textLine = new StringBuilder();
+	        textLineWidth = 0;
     	}
     }
     

@@ -178,14 +178,14 @@ public class CSSBoxTree extends PDFDomTree
     }
 
     @Override
-    protected void renderText(String data)
+    protected void renderText(String data, float width)
     {
         //DOM element
-        Element el = createTextElement(data);
+        Element el = createTextElement(data, width);
         curpage.appendChild(el);
         //Block box
         BlockBox block = createBlock(pagebox, el, false);
-        block.setStyle(createTextStyle(curstyle));
+        block.setStyle(createTextStyle(curstyle, width));
         pagebox.addSubBox(block);
         //Text box
         TextBox text = createTextBox(block, (Text) el.getFirstChild());
@@ -318,7 +318,7 @@ public class CSSBoxTree extends PDFDomTree
      * @param style The source box style.
      * @return The element style definition.
      */
-    protected NodeData createTextStyle(BoxStyle style)
+    protected NodeData createTextStyle(BoxStyle style, float width)
     {
         NodeData ret = CSSFactory.createNodeData();
         TermFactory tf = CSSFactory.getTermFactory();
@@ -344,6 +344,9 @@ public class CSSBoxTree extends PDFDomTree
 			ret.push(createDeclaration("letter-spacing", tf.createLength((float) style.getLetterSpacing(), unit)));
 		if (style.getColor() != null)
 			ret.push(createDeclaration("color", tf.createColor(style.getColor())));
+		
+		ret.push(createDeclaration("width", tf.createLength(width, unit)));
+		
         return ret;
     }
     

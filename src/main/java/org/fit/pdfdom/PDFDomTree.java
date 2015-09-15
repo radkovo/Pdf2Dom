@@ -186,9 +186,9 @@ public class PDFDomTree extends PDFBoxTree
     }
     
     @Override
-    protected void renderText(String data)
+    protected void renderText(String data, float width)
     {
-    	curpage.appendChild(createTextElement(data));
+    	curpage.appendChild(createTextElement(data, width));
     }
 
     @Override
@@ -259,12 +259,14 @@ public class PDFDomTree extends PDFBoxTree
      * Creates an element that represents a single positioned box with no content.
      * @return the resulting DOM element
      */
-    protected Element createTextElement()
+    protected Element createTextElement(float width)
     {
         Element el = doc.createElement("div");
         el.setAttribute("id", "p" + (textcnt++));
         el.setAttribute("class", "p");
-        el.setAttribute("style", curstyle.toString());
+        String style = curstyle.toString();
+        style += "width:" + width + UNIT + ";";
+        el.setAttribute("style", style);
         return el;
     }
     
@@ -273,9 +275,9 @@ public class PDFDomTree extends PDFBoxTree
      * @param data the text string to be contained in the created box.
      * @return the resulting DOM element
      */
-    protected Element createTextElement(String data)
+    protected Element createTextElement(String data, float width)
     {
-        Element el = createTextElement();
+        Element el = createTextElement(width);
         Text text = doc.createTextNode(data);
         el.appendChild(text);
         return el;
