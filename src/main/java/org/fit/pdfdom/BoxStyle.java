@@ -37,6 +37,7 @@ public class BoxStyle
 	private float fontSize;
 	private String fontWeight;
 	private String fontStyle;
+    private float lineHeight;
 	private float wordSpacing;
 	private	float letterSpacing;
 	private String color;
@@ -56,6 +57,7 @@ public class BoxStyle
 		fontSize = 0;
 		fontWeight = null;
 		fontStyle = null;
+		lineHeight = 0;
 		wordSpacing = 0;
 		letterSpacing = 0;
 		color = null;
@@ -71,6 +73,7 @@ public class BoxStyle
 		fontSize = src.fontSize;
 		fontWeight = src.fontWeight == null ? null : new String(src.fontWeight);
 		fontStyle = src.fontStyle == null ? null : new String(src.fontStyle);
+		lineHeight = src.lineHeight;
 		wordSpacing = src.wordSpacing;
 		letterSpacing = src.letterSpacing;
 		color = src.color == null ? null : new String(src.color);
@@ -86,6 +89,7 @@ public class BoxStyle
 			appendString(ret, "position", position);
 		appendLength(ret, "top", top);
 		appendLength(ret, "left", left);
+		appendLength(ret, "line-height", lineHeight);
 		if (fontFamily != null)
 			appendString(ret, "font-family", fontFamily);
 		if (fontSize != 0)
@@ -208,6 +212,22 @@ public class BoxStyle
 	}
 
 	/**
+     * @return the lineHeight
+     */
+    public float getLineHeight()
+    {
+        return lineHeight;
+    }
+
+    /**
+     * @param lineHeight the lineHeight to set
+     */
+    public void setLineHeight(float lineHeight)
+    {
+        this.lineHeight = lineHeight;
+    }
+
+    /**
 	 * @return the wordSpacing
 	 */
 	public float getWordSpacing()

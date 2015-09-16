@@ -608,16 +608,16 @@ public abstract class PDFBoxTree extends PDFTextStripper
             System.out.println(" Height: " + text.getHeight());
             System.out.println(" XScale: " + text.getXScale());*/
             
-            int distx = 0;
-            int disty = 0;
+            float distx = 0;
+            float disty = 0;
             if (lastText != null)
             {
-                distx = (int) (text.getX() - (lastText.getX() + lastText.getWidth()));
-                disty = (int) (text.getY() - lastText.getY());
+                distx = text.getX() - (lastText.getX() + lastText.getWidth());
+                disty = text.getY() - lastText.getY();
             }
 
             //should we split the boxes?
-            boolean split = lastText == null || distx > 1 || distx < -6 || Math.abs(disty) > 1
+            boolean split = lastText == null || distx > 1.0f || distx < -6.0f || Math.abs(disty) > 1.0f
                                 || isReversed(getTextDirectionality(text)) != isReversed(getTextDirectionality(lastText));
             //if the style changed, we should split the boxes
             updateStyle(style, text);
@@ -632,7 +632,7 @@ public abstract class PDFBoxTree extends PDFTextStripper
                 //start a new box
 	            curstyle = new BoxStyle(style);
 	            curstyle.setLeft(cur_x);
-	            curstyle.setTop(cur_y - text.getFontSizeInPt());
+	            curstyle.setTop(cur_y - text.getHeight());
             }
             textLine.append(text.getCharacter());
             textLineWidth += text.getWidth();
@@ -692,6 +692,7 @@ public abstract class PDFBoxTree extends PDFTextStripper
         String fstyle = null;
         
         bstyle.setFontSize(text.getFontSizeInPt());
+        bstyle.setLineHeight(text.getHeight());
 
         if (font != null)
         {

@@ -325,6 +325,7 @@ public class CSSBoxTree extends PDFDomTree
         ret.push(createDeclaration("position", tf.createIdent("absolute")));
         ret.push(createDeclaration("left", tf.createLength(style.getLeft(), unit)));
         ret.push(createDeclaration("top", tf.createLength(style.getTop(), unit)));
+        ret.push(createDeclaration("line-height", tf.createLength(style.getLineHeight(), unit)));
 		if (style.getFontFamily() != null)
 			ret.push(createDeclaration("font-family", tf.createString(style.getFontFamily())));
 		if (style.getFontSize() != 0)
