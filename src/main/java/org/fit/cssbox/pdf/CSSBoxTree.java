@@ -323,6 +323,7 @@ public class CSSBoxTree extends PDFDomTree
         NodeData ret = CSSFactory.createNodeData();
         TermFactory tf = CSSFactory.getTermFactory();
         ret.push(createDeclaration("position", tf.createIdent("absolute")));
+        ret.push(createDeclaration("overflow", tf.createIdent("hidden")));
         ret.push(createDeclaration("left", tf.createLength(style.getLeft(), unit)));
         ret.push(createDeclaration("top", tf.createLength(style.getTop(), unit)));
         ret.push(createDeclaration("line-height", tf.createLength(style.getLineHeight(), unit)));
