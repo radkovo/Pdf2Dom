@@ -98,6 +98,9 @@ public abstract class PDFBoxTree extends PDFTextStripper
     /** Previous positioned text. */
     protected TextPosition lastText = null;
     
+    /** Last diacritic if any */
+    protected TextPosition lastDia = null;
+    
     /** The text box currently being created. */
     protected StringBuilder textLine;
 
@@ -528,8 +531,19 @@ public abstract class PDFBoxTree extends PDFTextStripper
     @Override
     protected void processTextPosition(TextPosition text)
     {
-        if (!text.getUnicode().trim().isEmpty())
+        if (text.isDiacritic())
         {
+            lastDia = text;
+        }
+        else if (!text.getUnicode().trim().isEmpty())
+        {
+            if (lastDia != null)
+            {
+                if (text.contains(lastDia))
+                    text.mergeDiacritic(lastDia);
+                lastDia = null;
+            }
+            
             /*float[] c = transformPosition(text.getX(), text.getY());
             cur_x = c[0];
             cur_y = c[1];*/
