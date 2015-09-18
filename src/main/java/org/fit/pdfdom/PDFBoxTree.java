@@ -498,7 +498,7 @@ public abstract class PDFBoxTree extends PDFTextStripper
                         y -= height;
                     }
                     
-                    /*switch (pdpage.findRotation())
+                    switch (pdpage.getRotation())
                     {
                         case 90:
                             y = -y;
@@ -509,7 +509,7 @@ public abstract class PDFBoxTree extends PDFTextStripper
                         case 270:
                             x = -x; y = -y;
                             break;
-                    }*/
+                    }
 
                     String mime;
                     if (image.getSuffix().equalsIgnoreCase("jpg") || image.getSuffix().equalsIgnoreCase("jpeg"))
@@ -566,9 +566,6 @@ public abstract class PDFBoxTree extends PDFTextStripper
             	//finish current box (if any)
             	if (lastText != null)
             	{
-                    curstyle.setLeft(textMetrics.getX());
-                    curstyle.setTop(textMetrics.getTop());
-                    curstyle.setLineHeight(textMetrics.getHeight());
             		finishBox();
             	}
                 //start a new box
@@ -595,7 +592,11 @@ public abstract class PDFBoxTree extends PDFTextStripper
                 s = textLine.reverse().toString();
             else
                 s = textLine.toString();
-    	    //System.out.println("Text: " + s);
+            
+            curstyle.setLeft(textMetrics.getX());
+            curstyle.setTop(textMetrics.getTop());
+            curstyle.setLineHeight(textMetrics.getHeight());
+
 	        renderText(s, textMetrics);
 	        textLine = new StringBuilder();
 	        textMetrics = null;
@@ -634,7 +635,8 @@ public abstract class PDFBoxTree extends PDFTextStripper
         String weight = null;
         String fstyle = null;
         
-        bstyle.setFontSize(text.getFontSizeInPt());
+        //TODO strange but works. Officialy, just getFontSizeInPt() should be enough.
+        bstyle.setFontSize(text.getFontSizeInPt() / text.getFontSize()); 
         bstyle.setLineHeight(text.getHeight());
 
         if (font != null)
@@ -697,9 +699,7 @@ public abstract class PDFBoxTree extends PDFTextStripper
             AffineTransform rotation = new AffineTransform();
             rotation.setToRotation(rotationInRadians);
             AffineTransform rotationInverse = rotation.createInverse();
-            Matrix rotationInverseMatrix = new Matrix();
-            rotationInverseMatrix.setFromAffineTransform(rotationInverse);
-
+            Matrix rotationInverseMatrix = new Matrix(rotationInverse);
             return rotationInverseMatrix;
             
         } catch (NoninvertibleTransformException e) {
@@ -718,7 +718,7 @@ public abstract class PDFBoxTree extends PDFTextStripper
     	Matrix ctm = getGraphicsState().getCurrentTransformationMatrix();
     	Matrix m = new Matrix();
     	m.setValue(2, 0, w);
-    	return m.multiply(ctm).getXPosition();
+    	return m.multiply(ctm).getTranslateX();
     }
     
     /**
@@ -737,8 +737,8 @@ public abstract class PDFBoxTree extends PDFTextStripper
         Matrix sposXctm = spos.multiply(ctm); 
         Matrix ret = sposXctm.multiply(createUnrotationMatrix());
         
-        float rx = ret.getXPosition();
-        float ry = ret.getYPosition();
+        float rx = ret.getTranslateX();
+        float ry = ret.getTranslateY();
         switch (pdpage.getRotation())
         {
             case 90:

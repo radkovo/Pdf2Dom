@@ -14,8 +14,8 @@ public class TextMetrics
 
     public TextMetrics(TextPosition tp)
     {
-        x = tp.getXDirAdj();
-        baseline = tp.getYDirAdj();
+        x = tp.getX();
+        baseline = tp.getY();
         font = tp.getFont();
         width = tp.getWidth();
         height = tp.getHeight();
