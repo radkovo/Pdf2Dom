@@ -186,9 +186,9 @@ public class PDFDomTree extends PDFBoxTree
     }
     
     @Override
-    protected void renderText(String data, float width)
+    protected void renderText(String data, TextMetrics metrics)
     {
-    	curpage.appendChild(createTextElement(data, width));
+    	curpage.appendChild(createTextElement(data, metrics.getWidth()));
     }
 
     @Override

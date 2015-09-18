@@ -112,8 +112,8 @@ public abstract class PDFBoxTree extends PDFTextStripper
     /** The text box currently being created. */
     protected StringBuilder textLine;
 
-    /** Total text line width */
-    protected float textLineWidth;
+    /** Current text line metrics */
+    protected TextMetrics textMetrics;
     
     /** Current graphics path */
     protected Vector<PathSegment> graphicsPath;
@@ -147,7 +147,7 @@ public abstract class PDFBoxTree extends PDFTextStripper
     {
         style = new BoxStyle(UNIT);
         textLine = new StringBuilder();
-        textLineWidth = 0;
+        textMetrics = null;
         strokingColor = null;
         lineWidth = 0;
         graphicsPath = new Vector<PathSegment>();
@@ -308,7 +308,7 @@ public abstract class PDFBoxTree extends PDFTextStripper
      * in the {@link PDFBoxTree#curstyle} property. 
      * @param data The text contents.
      */
-    protected abstract void renderText(String data, float width);
+    protected abstract void renderText(String data, TextMetrics metrics);
     
     /**
      * Adds a rectangle to the current page on the specified position.
@@ -606,7 +606,9 @@ public abstract class PDFBoxTree extends PDFTextStripper
             System.out.println(" Width: " + text.getWidth());
             System.out.println(" Width adj: " + text.getWidthDirAdj());
             System.out.println(" Height: " + text.getHeight());
-            System.out.println(" XScale: " + text.getXScale());*/
+            System.out.println(" Height dir: " + text.getHeightDir());
+            System.out.println(" XScale: " + text.getXScale());
+            System.out.println(" YScale: " + text.getYScale());*/
             
             float distx = 0;
             float disty = 0;
@@ -628,14 +630,20 @@ public abstract class PDFBoxTree extends PDFTextStripper
             {
             	//finish current box (if any)
             	if (lastText != null)
+            	{
+                    curstyle.setLeft(textMetrics.getX());
+                    curstyle.setTop(textMetrics.getTop());
+                    curstyle.setLineHeight(textMetrics.getHeight());
             		finishBox();
+            	}
                 //start a new box
 	            curstyle = new BoxStyle(style);
-	            curstyle.setLeft(cur_x);
-	            curstyle.setTop(cur_y - text.getHeight());
             }
             textLine.append(text.getCharacter());
-            textLineWidth += text.getWidth();
+            if (textMetrics == null)
+                textMetrics = new TextMetrics(text);
+            else
+                textMetrics.append(text);
             lastText = text;
         }
     }    
@@ -653,9 +661,9 @@ public abstract class PDFBoxTree extends PDFTextStripper
             else
                 s = textLine.toString();
     	    //System.out.println("Text: " + s);
-	        renderText(s, textLineWidth);
+	        renderText(s, textMetrics);
 	        textLine = new StringBuilder();
-	        textLineWidth = 0;
+	        textMetrics = null;
     	}
     }
     
