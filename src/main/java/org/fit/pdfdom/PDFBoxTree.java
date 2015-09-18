@@ -21,12 +21,16 @@ package org.fit.pdfdom;
 
 import java.awt.geom.AffineTransform;
 import java.awt.geom.NoninvertibleTransformException;
+import java.awt.image.BufferedImage;
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.Vector;
+
+import javax.imageio.ImageIO;
 
 import org.apache.pdfbox.contentstream.operator.Operator;
 import org.apache.pdfbox.cos.COSBase;
@@ -514,13 +518,7 @@ public abstract class PDFBoxTree extends PDFTextStripper
                             break;
                     }
 
-                    String mime;
-                    if (image.getSuffix().equalsIgnoreCase("jpg") || image.getSuffix().equalsIgnoreCase("jpeg"))
-                        mime = "image/jpeg";
-                    else
-                        mime = "image/png";
-                    
-                    renderImage(x, y, width, height, mime, data);
+                    renderImage(x, y - height, width, height, "image/png", data);
                 }
             }
         }
@@ -854,7 +852,10 @@ public abstract class PDFBoxTree extends PDFTextStripper
      */
     protected byte[] getImageData(PDImageXObject image) throws IOException
     {
-        return image.getStream().toByteArray();
+        BufferedImage img = image.getImage();
+        ByteArrayOutputStream buffer = new ByteArrayOutputStream();
+        ImageIO.write(img, "PNG", buffer);
+        return buffer.toByteArray();
     }
 
     protected byte getTextDirectionality(TextPosition text)
