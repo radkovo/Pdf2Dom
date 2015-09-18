@@ -3,11 +3,9 @@ package org.fit.pdfdom;
 
 import java.io.IOException;
 
-import org.apache.pdfbox.pdmodel.common.PDRectangle;
-import org.apache.pdfbox.pdmodel.font.PDCIDFont;
+import org.apache.fontbox.util.BoundingBox;
 import org.apache.pdfbox.pdmodel.font.PDFont;
-import org.apache.pdfbox.pdmodel.font.PDSimpleFont;
-import org.apache.pdfbox.util.TextPosition;
+import org.apache.pdfbox.text.TextPosition;
 
 public class TextMetrics
 {
@@ -85,7 +83,7 @@ public class TextMetrics
     {
         try
         {
-            PDRectangle bBox = font.getFontBoundingBox();
+            BoundingBox bBox = font.getBoundingBox();
             float boxDescent = bBox.getLowerLeftY();
             return (boxDescent / 1000) * fontSize;
         } catch (IOException e) {
@@ -97,7 +95,7 @@ public class TextMetrics
     {
         try
         {
-            PDRectangle bBox = font.getFontBoundingBox();
+            BoundingBox bBox = font.getBoundingBox();
             float boxAscent = bBox.getUpperRightY();
             return (boxAscent / 1000) * fontSize;
         } catch (IOException e) {
@@ -109,16 +107,7 @@ public class TextMetrics
     {
         try
         {
-            if (font instanceof PDSimpleFont)
-            {
-                PDSimpleFont simpleFont = (PDSimpleFont) font;
-                return (simpleFont.getFontDescriptor().getAscent() / 1000) * fontSize;
-            }
-            else if (font instanceof PDCIDFont)
-            {
-                PDCIDFont cidFont = (PDCIDFont) font;
-                return (cidFont.getFontDescriptor().getAscent() / 1000) * fontSize;
-            }
+            return (font.getFontDescriptor().getAscent() / 1000) * fontSize;
         } catch (Exception e) {
         }
         return 0.0f;
@@ -128,16 +117,7 @@ public class TextMetrics
     {
         try
         {
-            if (font instanceof PDSimpleFont)
-            {
-                PDSimpleFont simpleFont = (PDSimpleFont) font;
-                return (-Math.abs(simpleFont.getFontDescriptor().getDescent()) / 1000) * fontSize;
-            }
-            else if (font instanceof PDCIDFont)
-            {
-                PDCIDFont cidFont = (PDCIDFont) font;
-                return (-Math.abs(cidFont.getFontDescriptor().getDescent()) / 1000) * fontSize;
-            }
+            return (font.getFontDescriptor().getDescent() / 1000) * fontSize;
         } catch (Exception e)
         {
         }

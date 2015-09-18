@@ -27,7 +27,6 @@ import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
 
-import org.apache.pdfbox.exceptions.WrappedIOException;
 import org.apache.pdfbox.pdmodel.PDDocument;
 import org.apache.pdfbox.pdmodel.common.PDRectangle;
 import org.slf4j.Logger;
@@ -133,15 +132,19 @@ public class PDFDomTree extends PDFBoxTree
     }
     
     @Override
-    public void processDocument(PDDocument document, int startPage, int endPage)
+    public void startDocument(PDDocument document)
             throws IOException
     {
     	try {
     		createDocument();
     	} catch (ParserConfigurationException e) {
-            throw new WrappedIOException("Error: parser configuration error", e);
+            throw new IOException("Error: parser configuration error", e);
     	}
-        super.processDocument(document, startPage, endPage);
+    }
+
+    @Override
+    protected void endDocument(PDDocument document) throws IOException
+    {
         //use the PDF title
         String doctitle = document.getDocumentInformation().getTitle();
         if (doctitle != null && doctitle.trim().length() > 0)
@@ -163,16 +166,16 @@ public class PDFDomTree extends PDFBoxTree
             LSOutput output = impl.createLSOutput();
             writer.getDomConfig().setParameter("format-pretty-print", true);
             output.setCharacterStream(outputStream);
-            processDocument(doc);
-            writer.write(getDocument(), output);
+            super.writeText(doc, outputStream); //this should not print anything to outputStream
+            writer.write(getDocument(), output); //this is the actual output
         } catch (ClassCastException e) {
-            throw new WrappedIOException("Error: cannot initialize the DOM serializer", e);
+            throw new IOException("Error: cannot initialize the DOM serializer", e);
         } catch (ClassNotFoundException e) {
-            throw new WrappedIOException("Error: cannot initialize the DOM serializer", e);
+            throw new IOException("Error: cannot initialize the DOM serializer", e);
         } catch (InstantiationException e) {
-            throw new WrappedIOException("Error: cannot initialize the DOM serializer", e);
+            throw new IOException("Error: cannot initialize the DOM serializer", e);
         } catch (IllegalAccessException e) {
-            throw new WrappedIOException("Error: cannot initialize the DOM serializer", e);
+            throw new IOException("Error: cannot initialize the DOM serializer", e);
         }
     }
     
@@ -237,7 +240,7 @@ public class PDFDomTree extends PDFBoxTree
             
             float w = layout.getWidth();
             float h = layout.getHeight();
-            final int rot = pdpage.findRotation();
+            final int rot = pdpage.getRotation();
             if (rot == 90 || rot == 270)
             {
                 float x = w; w = h; h = x;

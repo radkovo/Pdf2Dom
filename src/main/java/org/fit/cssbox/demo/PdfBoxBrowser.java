@@ -29,7 +29,6 @@ import java.net.URLConnection;
 import javax.swing.JFrame;
 import javax.swing.tree.DefaultTreeModel;
 
-import org.apache.pdfbox.exceptions.CryptographyException;
 import org.apache.pdfbox.pdmodel.PDDocument;
 import org.fit.cssbox.layout.BrowserCanvas;
 import org.fit.cssbox.layout.Viewport;
@@ -109,18 +108,6 @@ public class PdfBoxBrowser extends org.fit.cssbox.demo.BoxBrowser
     {
         PDDocument document = null;
         document = PDDocument.load(is);
-        if (document.isEncrypted())
-        {
-            try
-            {
-                document.decrypt("");
-            }
-            catch(CryptographyException e)
-            {
-                log.error("Cryptography error:" + e.getMessage());
-                System.exit(1);
-            }
-        }
         return document;
     }
     

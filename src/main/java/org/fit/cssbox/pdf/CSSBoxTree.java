@@ -22,6 +22,7 @@ package org.fit.cssbox.pdf;
 import java.awt.Dimension;
 import java.awt.Graphics2D;
 import java.io.IOException;
+import java.io.OutputStreamWriter;
 import java.net.URL;
 import java.util.List;
 
@@ -34,6 +35,7 @@ import cz.vutbr.web.css.Term;
 import cz.vutbr.web.css.TermFactory;
 import cz.vutbr.web.css.TermNumeric.Unit;
 
+import org.apache.pdfbox.pdmodel.PDDocument;
 import org.apache.pdfbox.pdmodel.common.PDRectangle;
 import org.fit.cssbox.layout.BlockBox;
 import org.fit.cssbox.layout.BlockReplacedBox;
@@ -149,6 +151,13 @@ public class CSSBoxTree extends PDFDomTree
         return next_order;
     }
 
+    public void processDocument(PDDocument pdfdocument, int startPage, int endPage) throws IOException
+    {
+        setStartPage(startPage);
+        setEndPage(endPage);
+        writeText(pdfdocument, new OutputStreamWriter(System.out));
+    }
+    
     @Override
     protected void createDocument() throws ParserConfigurationException
     {
@@ -396,7 +405,7 @@ public class CSSBoxTree extends PDFDomTree
         {
             float w = layout.getWidth();
             float h = layout.getHeight();
-            final int rot = pdpage.findRotation();
+            final int rot = pdpage.getRotation();
             if (rot == 90 || rot == 270)
             {
                 float x = w; w = h; h = x;
@@ -508,5 +517,5 @@ public class CSSBoxTree extends PDFDomTree
         d.add(term);
         return d;
     }
-    
+
 }
