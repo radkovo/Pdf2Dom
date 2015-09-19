@@ -66,7 +66,8 @@ public class TextMetrics
 
     public float getDescent()
     {
-        return getDescent(font, fontSize);
+        final float descent = getDescent(font, fontSize);
+        return descent > 0 ? -descent : descent; //positive descent is not allowed
     }
 
     public float getBoundingBoxDescent()
