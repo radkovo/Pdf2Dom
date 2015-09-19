@@ -34,6 +34,7 @@ import cz.vutbr.web.css.Term;
 import cz.vutbr.web.css.TermFactory;
 import cz.vutbr.web.css.TermNumeric.Unit;
 
+import org.apache.pdfbox.pdmodel.PDDocument;
 import org.apache.pdfbox.pdmodel.common.PDRectangle;
 import org.fit.cssbox.layout.BlockBox;
 import org.fit.cssbox.layout.BlockReplacedBox;
@@ -45,6 +46,7 @@ import org.fit.cssbox.layout.VisualContext;
 import org.fit.pdfdom.BoxStyle;
 import org.fit.pdfdom.PDFDomTree;
 import org.fit.pdfdom.PathSegment;
+import org.fit.pdfdom.TextMetrics;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.w3c.dom.Document;
@@ -148,6 +150,13 @@ public class CSSBoxTree extends PDFDomTree
         return next_order;
     }
 
+    public void processDocument(PDDocument pdfdocument, int startPage, int endPage) throws IOException
+    {
+        setStartPage(startPage);
+        setEndPage(endPage);
+        createDOM(pdfdocument);
+    }
+    
     @Override
     protected void createDocument() throws ParserConfigurationException
     {
@@ -178,14 +187,14 @@ public class CSSBoxTree extends PDFDomTree
     }
 
     @Override
-    protected void renderText(String data, float width)
+    protected void renderText(String data, TextMetrics metrics)
     {
         //DOM element
-        Element el = createTextElement(data, width);
+        Element el = createTextElement(data, metrics.getWidth());
         curpage.appendChild(el);
         //Block box
         BlockBox block = createBlock(pagebox, el, false);
-        block.setStyle(createTextStyle(curstyle, width));
+        block.setStyle(createTextStyle(curstyle, metrics.getWidth()));
         pagebox.addSubBox(block);
         //Text box
         TextBox text = createTextBox(block, (Text) el.getFirstChild());
@@ -307,7 +316,7 @@ public class CSSBoxTree extends PDFDomTree
         TextBox text = new TextBox(n, (Graphics2D) contblock.getGraphics().create(), contblock.getVisualContext().create());
         text.setOrder(next_order++);
         text.setContainingBlock(contblock);
-        text.setClipBlock(viewport);
+        text.setClipBlock(contblock);
         text.setViewport(viewport);
         text.setBase(baseurl);
         return text;
@@ -395,7 +404,7 @@ public class CSSBoxTree extends PDFDomTree
         {
             float w = layout.getWidth();
             float h = layout.getHeight();
-            final int rot = pdpage.findRotation();
+            final int rot = pdpage.getRotation();
             if (rot == 90 || rot == 270)
             {
                 float x = w; w = h; h = x;
@@ -507,5 +516,5 @@ public class CSSBoxTree extends PDFDomTree
         d.add(term);
         return d;
     }
-    
+
 }

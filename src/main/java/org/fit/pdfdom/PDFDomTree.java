@@ -20,6 +20,7 @@
 package org.fit.pdfdom;
 
 import java.io.IOException;
+import java.io.OutputStreamWriter;
 import java.io.Writer;
 import java.util.List;
 
@@ -27,7 +28,6 @@ import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
 
-import org.apache.pdfbox.exceptions.WrappedIOException;
 import org.apache.pdfbox.pdmodel.PDDocument;
 import org.apache.pdfbox.pdmodel.common.PDRectangle;
 import org.slf4j.Logger;
@@ -133,15 +133,19 @@ public class PDFDomTree extends PDFBoxTree
     }
     
     @Override
-    public void processDocument(PDDocument document, int startPage, int endPage)
+    public void startDocument(PDDocument document)
             throws IOException
     {
     	try {
     		createDocument();
     	} catch (ParserConfigurationException e) {
-            throw new WrappedIOException("Error: parser configuration error", e);
+            throw new IOException("Error: parser configuration error", e);
     	}
-        super.processDocument(document, startPage, endPage);
+    }
+
+    @Override
+    protected void endDocument(PDDocument document) throws IOException
+    {
         //use the PDF title
         String doctitle = document.getDocumentInformation().getTitle();
         if (doctitle != null && doctitle.trim().length() > 0)
@@ -163,17 +167,32 @@ public class PDFDomTree extends PDFBoxTree
             LSOutput output = impl.createLSOutput();
             writer.getDomConfig().setParameter("format-pretty-print", true);
             output.setCharacterStream(outputStream);
-            processDocument(doc);
+            createDOM(doc);
             writer.write(getDocument(), output);
         } catch (ClassCastException e) {
-            throw new WrappedIOException("Error: cannot initialize the DOM serializer", e);
+            throw new IOException("Error: cannot initialize the DOM serializer", e);
         } catch (ClassNotFoundException e) {
-            throw new WrappedIOException("Error: cannot initialize the DOM serializer", e);
+            throw new IOException("Error: cannot initialize the DOM serializer", e);
         } catch (InstantiationException e) {
-            throw new WrappedIOException("Error: cannot initialize the DOM serializer", e);
+            throw new IOException("Error: cannot initialize the DOM serializer", e);
         } catch (IllegalAccessException e) {
-            throw new WrappedIOException("Error: cannot initialize the DOM serializer", e);
+            throw new IOException("Error: cannot initialize the DOM serializer", e);
         }
+    }
+    
+    /**
+     * Loads a PDF document and creates a DOM tree from it.
+     * @param doc the source document
+     * @return a DOM Document representing the DOM tree
+     * @throws IOException
+     */
+    public Document createDOM(PDDocument doc) throws IOException
+    {
+        /* We call the original PDFTextStripper.writeText but nothing should
+           be printed actually because our processing methods produce no output.
+           They create the DOM structures instead */
+        super.writeText(doc, new OutputStreamWriter(System.out));
+        return this.doc;
     }
     
     //===========================================================================================
@@ -186,9 +205,9 @@ public class PDFDomTree extends PDFBoxTree
     }
     
     @Override
-    protected void renderText(String data, float width)
+    protected void renderText(String data, TextMetrics metrics)
     {
-    	curpage.appendChild(createTextElement(data, width));
+    	curpage.appendChild(createTextElement(data, metrics.getWidth()));
     }
 
     @Override
@@ -237,7 +256,7 @@ public class PDFDomTree extends PDFBoxTree
             
             float w = layout.getWidth();
             float h = layout.getHeight();
-            final int rot = pdpage.findRotation();
+            final int rot = pdpage.getRotation();
             if (rot == 90 || rot == 270)
             {
                 float x = w; w = h; h = x;

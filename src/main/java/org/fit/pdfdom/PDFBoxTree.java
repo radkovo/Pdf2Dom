@@ -21,36 +21,29 @@ package org.fit.pdfdom;
 
 import java.awt.geom.AffineTransform;
 import java.awt.geom.NoninvertibleTransformException;
+import java.awt.image.BufferedImage;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
-import java.io.InputStream;
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 import java.util.Vector;
 
+import javax.imageio.ImageIO;
+
+import org.apache.pdfbox.contentstream.operator.Operator;
 import org.apache.pdfbox.cos.COSBase;
 import org.apache.pdfbox.cos.COSName;
 import org.apache.pdfbox.cos.COSNumber;
-import org.apache.pdfbox.cos.COSStream;
 import org.apache.pdfbox.cos.COSString;
-import org.apache.pdfbox.exceptions.CryptographyException;
-import org.apache.pdfbox.exceptions.WrappedIOException;
-import org.apache.pdfbox.pdmodel.PDDocument;
 import org.apache.pdfbox.pdmodel.PDPage;
-import org.apache.pdfbox.pdmodel.PDPageNode;
 import org.apache.pdfbox.pdmodel.common.PDRectangle;
-import org.apache.pdfbox.pdmodel.common.PDStream;
-import org.apache.pdfbox.pdmodel.graphics.xobject.PDJpeg;
-import org.apache.pdfbox.pdmodel.graphics.xobject.PDXObject;
-import org.apache.pdfbox.pdmodel.graphics.xobject.PDXObjectImage;
+import org.apache.pdfbox.pdmodel.graphics.PDXObject;
+import org.apache.pdfbox.pdmodel.graphics.image.PDImageXObject;
+import org.apache.pdfbox.text.PDFTextStripper;
+import org.apache.pdfbox.text.TextPosition;
 import org.apache.pdfbox.util.Matrix;
-import org.apache.pdfbox.util.PDFOperator;
-import org.apache.pdfbox.util.PDFTextStripper;
-import org.apache.pdfbox.util.TextPosition;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -109,11 +102,14 @@ public abstract class PDFBoxTree extends PDFTextStripper
     /** Previous positioned text. */
     protected TextPosition lastText = null;
     
+    /** Last diacritic if any */
+    protected TextPosition lastDia = null;
+    
     /** The text box currently being created. */
     protected StringBuilder textLine;
 
-    /** Total text line width */
-    protected float textLineWidth;
+    /** Current text line metrics */
+    protected TextMetrics textMetrics;
     
     /** Current graphics path */
     protected Vector<PathSegment> graphicsPath;
@@ -147,7 +143,7 @@ public abstract class PDFBoxTree extends PDFTextStripper
     {
         style = new BoxStyle(UNIT);
         textLine = new StringBuilder();
-        textLineWidth = 0;
+        textMetrics = null;
         strokingColor = null;
         lineWidth = 0;
         graphicsPath = new Vector<PathSegment>();
@@ -156,64 +152,11 @@ public abstract class PDFBoxTree extends PDFTextStripper
     }
     
     
-    /**
-     * Processes all pages of the PDF document with the parser.
-     * @param document The document to be processed.
-     * @throws IOException
-     */
-    public void processDocument(PDDocument document) throws IOException
-    {
-        processDocument(document, 0, Integer.MAX_VALUE);
-    }
-    
-    /**
-     * Processes a range of pages of the PDF document with the parser.
-     * @param document The document to be processed.
-     * @param startPage The first page to be processed.
-     * @param endPage The last page to be processed 
-     * @throws IOException
-     */
-    public void processDocument(PDDocument document, int startPage, int endPage) throws IOException
-    {
-        resetEngine();
-        this.startPage = startPage;
-        this.endPage = endPage;
-
-        if (document.isEncrypted())
-        {
-            try
-            {
-                document.decrypt("");
-            }
-            catch (CryptographyException e)
-            {
-                throw new WrappedIOException("Error decrypting document, details: ", e);
-            }
-        }
-        
-        List<?> allPages = document.getDocumentCatalog().getAllPages();
-        for(int i = startPage; i <= endPage; i++)
-        {
-            if (i >= 0 && i < allPages.size())
-            {
-                PDPage page = (PDPage)allPages.get(i);
-                PDStream contents = page.getContents();
-                if (contents != null)
-                {
-                    processPage(page, contents.getStream());
-                }
-            }
-            else if (i >= allPages.size())
-            	break;
-        }
-        
-    }
-
-    protected void processPage(PDPage page, COSStream content) throws IOException
+    public void processPage(PDPage page) throws IOException
     {
         pdpage = page;
         startNewPage();
-        processStream(page, page.findResources(), content);
+        super.processPage(page);
         finishBox();
     }
     
@@ -308,7 +251,7 @@ public abstract class PDFBoxTree extends PDFTextStripper
      * in the {@link PDFBoxTree#curstyle} property. 
      * @param data The text contents.
      */
-    protected abstract void renderText(String data, float width);
+    protected abstract void renderText(String data, TextMetrics metrics);
     
     /**
      * Adds a rectangle to the current page on the specified position.
@@ -358,10 +301,10 @@ public abstract class PDFBoxTree extends PDFTextStripper
     //===========================================================================================
     
     @Override
-    protected void processOperator(PDFOperator operator, List<COSBase> arguments)
+    protected void processOperator(Operator operator, List<COSBase> arguments)
             throws IOException
     {
-        String operation = operator.getOperation();
+        String operation = operator.getName();
         /*System.out.println("Operator: " + operation + ":" + arguments.size());
         if (operation.equals("sc") || operation.equals("cs"))
         {
@@ -539,19 +482,18 @@ public abstract class PDFBoxTree extends PDFTextStripper
             if (!disableImages)
             {
                 COSName objectName = (COSName)arguments.get( 0 );
-                Map<?,?> xobjects = getResources().getXObjects();
-                PDXObject xobject = (PDXObject)xobjects.get( objectName.getName() );
-                if( xobject instanceof PDXObjectImage )
+                PDXObject xobject = getResources().getXObject( objectName );
+                if (xobject instanceof PDImageXObject)
                 {
-                    PDXObjectImage image = (PDXObjectImage)xobject;
+                    PDImageXObject image = (PDImageXObject) xobject;
                     byte[] data = getImageData(image);
                     
                     Matrix ctm = getGraphicsState().getCurrentTransformationMatrix();
                     ctm = ctm.multiply(createUnrotationMatrix());
-                    float x = ctm.getXPosition();
-                    float y = ctm.getYPosition();
-                    float width = ctm.getXScale();
-                    float height = ctm.getYScale();
+                    float x = ctm.getTranslateX();
+                    float y = ctm.getTranslateY();
+                    float width = ctm.getScalingFactorX();
+                    float height = ctm.getScalingFactorY();
                     if (width < 0)
                     {
                         width = -width;
@@ -563,7 +505,7 @@ public abstract class PDFBoxTree extends PDFTextStripper
                         y -= height;
                     }
                     
-                    switch (pdpage.findRotation())
+                    switch (pdpage.getRotation())
                     {
                         case 90:
                             y = -y;
@@ -576,13 +518,7 @@ public abstract class PDFBoxTree extends PDFTextStripper
                             break;
                     }
 
-                    String mime;
-                    if (image.getSuffix().equalsIgnoreCase("jpg") || image.getSuffix().equalsIgnoreCase("jpeg"))
-                        mime = "image/jpeg";
-                    else
-                        mime = "image/png";
-                    
-                    renderImage(x, y, width, height, mime, data);
+                    renderImage(x, y - height, width, height, "image/png", data);
                 }
             }
         }
@@ -593,8 +529,19 @@ public abstract class PDFBoxTree extends PDFTextStripper
     @Override
     protected void processTextPosition(TextPosition text)
     {
-        if (!text.getCharacter().trim().isEmpty())
+        if (text.isDiacritic())
         {
+            lastDia = text;
+        }
+        else if (!text.getUnicode().trim().isEmpty())
+        {
+            if (lastDia != null)
+            {
+                if (text.contains(lastDia))
+                    text.mergeDiacritic(lastDia);
+                lastDia = null;
+            }
+            
             /*float[] c = transformPosition(text.getX(), text.getY());
             cur_x = c[0];
             cur_y = c[1];*/
@@ -606,7 +553,9 @@ public abstract class PDFBoxTree extends PDFTextStripper
             System.out.println(" Width: " + text.getWidth());
             System.out.println(" Width adj: " + text.getWidthDirAdj());
             System.out.println(" Height: " + text.getHeight());
-            System.out.println(" XScale: " + text.getXScale());*/
+            System.out.println(" Height dir: " + text.getHeightDir());
+            System.out.println(" XScale: " + text.getXScale());
+            System.out.println(" YScale: " + text.getYScale());*/
             
             float distx = 0;
             float disty = 0;
@@ -628,14 +577,17 @@ public abstract class PDFBoxTree extends PDFTextStripper
             {
             	//finish current box (if any)
             	if (lastText != null)
+            	{
             		finishBox();
+            	}
                 //start a new box
 	            curstyle = new BoxStyle(style);
-	            curstyle.setLeft(cur_x);
-	            curstyle.setTop(cur_y - text.getHeight());
             }
-            textLine.append(text.getCharacter());
-            textLineWidth += text.getWidth();
+            textLine.append(text.getUnicode());
+            if (textMetrics == null)
+                textMetrics = new TextMetrics(text);
+            else
+                textMetrics.append(text);
             lastText = text;
         }
     }    
@@ -652,10 +604,14 @@ public abstract class PDFBoxTree extends PDFTextStripper
                 s = textLine.reverse().toString();
             else
                 s = textLine.toString();
-    	    //System.out.println("Text: " + s);
-	        renderText(s, textLineWidth);
+            
+            curstyle.setLeft(textMetrics.getX());
+            curstyle.setTop(textMetrics.getTop());
+            curstyle.setLineHeight(textMetrics.getHeight());
+
+	        renderText(s, textMetrics);
 	        textLine = new StringBuilder();
-	        textLineWidth = 0;
+	        textMetrics = null;
     	}
     }
     
@@ -686,12 +642,13 @@ public abstract class PDFBoxTree extends PDFTextStripper
      */
     protected void updateStyle(BoxStyle bstyle, TextPosition text)
     {
-        String font = text.getFont().getBaseFont();
+        String font = text.getFont().getName();
         String family = null;
         String weight = null;
         String fstyle = null;
         
-        bstyle.setFontSize(text.getFontSizeInPt());
+        //TODO strange but works. Officialy, just getFontSizeInPt() should be enough.
+        bstyle.setFontSize(text.getFontSizeInPt() / text.getFontSize()); 
         bstyle.setLineHeight(text.getHeight());
 
         if (font != null)
@@ -737,16 +694,6 @@ public abstract class PDFBoxTree extends PDFTextStripper
     protected PDRectangle getCurrentMediaBox()
     {
         PDRectangle layout = pdpage.getMediaBox();
-        if (layout == null)
-        {
-            PDPageNode curpage;
-            do
-            {
-                curpage = pdpage.getParent();
-                if (curpage != null)
-                    layout = curpage.getMediaBox();
-            } while (layout == null && curpage != null);
-        }
         return layout;
     }
     
@@ -759,14 +706,12 @@ public abstract class PDFBoxTree extends PDFTextStripper
     {
         try
         {
-            double rotationInRadians = (pdpage.findRotation() * Math.PI) / 180;
+            double rotationInRadians = (pdpage.getRotation() * Math.PI) / 180;
 
             AffineTransform rotation = new AffineTransform();
             rotation.setToRotation(rotationInRadians);
             AffineTransform rotationInverse = rotation.createInverse();
-            Matrix rotationInverseMatrix = new Matrix();
-            rotationInverseMatrix.setFromAffineTransform(rotationInverse);
-
+            Matrix rotationInverseMatrix = new Matrix(rotationInverse);
             return rotationInverseMatrix;
             
         } catch (NoninvertibleTransformException e) {
@@ -785,7 +730,7 @@ public abstract class PDFBoxTree extends PDFTextStripper
     	Matrix ctm = getGraphicsState().getCurrentTransformationMatrix();
     	Matrix m = new Matrix();
     	m.setValue(2, 0, w);
-    	return m.multiply(ctm).getXPosition();
+    	return m.multiply(ctm).getTranslateX();
     }
     
     /**
@@ -804,9 +749,9 @@ public abstract class PDFBoxTree extends PDFTextStripper
         Matrix sposXctm = spos.multiply(ctm); 
         Matrix ret = sposXctm.multiply(createUnrotationMatrix());
         
-        float rx = ret.getXPosition();
-        float ry = ret.getYPosition();
-        switch (pdpage.findRotation())
+        float rx = ret.getTranslateX();
+        float ry = ret.getTranslateY();
+        switch (pdpage.getRotation())
         {
             case 90:
                 ry = -ry;
@@ -905,35 +850,17 @@ public abstract class PDFBoxTree extends PDFTextStripper
      * @return the resulting image data
      * @throws IOException
      */
-    protected byte[] getImageData(PDXObjectImage image) throws IOException
+    protected byte[] getImageData(PDImageXObject image) throws IOException
     {
-        if (image instanceof PDJpeg) //jpeg images
-        {
-            List<String> DCT_FILTERS = new ArrayList<String>();
-            DCT_FILTERS.add(COSName.DCT_DECODE.getName());
-            DCT_FILTERS.add(COSName.DCT_DECODE_ABBREVIATION.getName());
-    
-            ByteArrayOutputStream os = new ByteArrayOutputStream();
-            InputStream data = image.getPDStream().getPartiallyFilteredStream(DCT_FILTERS);
-            byte[] buf = new byte[1024];
-            int amountRead = -1;
-            while ((amountRead = data.read(buf)) != -1)
-                os.write(buf, 0, amountRead);
-            os.close();
-            return os.toByteArray();
-        }
-        else //PNG images
-        {
-            ByteArrayOutputStream os = new ByteArrayOutputStream();
-            image.write2OutputStream(os);
-            os.close();
-            return os.toByteArray();
-        }
+        BufferedImage img = image.getImage();
+        ByteArrayOutputStream buffer = new ByteArrayOutputStream();
+        ImageIO.write(img, "PNG", buffer);
+        return buffer.toByteArray();
     }
 
     protected byte getTextDirectionality(TextPosition text)
     {
-        return getTextDirectionality(text.getCharacter());
+        return getTextDirectionality(text.getUnicode());
     }
     
     protected byte getTextDirectionality(String s)

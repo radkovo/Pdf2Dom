@@ -19,11 +19,11 @@
  */
 package org.fit.pdfdom;
 
+import java.io.File;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.io.Writer;
 
-import org.apache.pdfbox.exceptions.CryptographyException;
 import org.apache.pdfbox.pdmodel.PDDocument;
 
 /**
@@ -57,23 +57,7 @@ public class PDFToHTML
         PDDocument document = null;
         try
         {
-            //document = PDDocument.load("test/CIC2011_Program.pdf");
-            //document = PDDocument.load("test/RuleML-2010-Programme.pdf");
-            //document = PDDocument.load("test/hassan.pdf");
-            document = PDDocument.load(infile);
-            if (document.isEncrypted())
-            {
-                try
-                {
-                    document.decrypt("");
-                }
-                catch (CryptographyException e)
-                {
-                    System.err.println("Error: Cryptography error:" + e.getMessage());
-                    System.exit(1);
-                }
-            }
-            
+            document = PDDocument.load(new File(infile));
             PDFDomTree parser = new PDFDomTree();
             //parser.setDisableImageData(true);
             Writer output = new PrintWriter(outfile, "utf-8");
@@ -83,7 +67,7 @@ public class PDFToHTML
         catch (Exception e)
         {
             System.err.println("Error: " + e.getMessage());
-            //e.printStackTrace();
+            e.printStackTrace();
         }
         finally
         {
