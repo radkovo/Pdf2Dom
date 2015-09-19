@@ -22,7 +22,6 @@ package org.fit.cssbox.pdf;
 import java.awt.Dimension;
 import java.awt.Graphics2D;
 import java.io.IOException;
-import java.io.OutputStreamWriter;
 import java.net.URL;
 import java.util.List;
 
@@ -155,7 +154,7 @@ public class CSSBoxTree extends PDFDomTree
     {
         setStartPage(startPage);
         setEndPage(endPage);
-        writeText(pdfdocument, new OutputStreamWriter(System.out));
+        createDOM(pdfdocument);
     }
     
     @Override

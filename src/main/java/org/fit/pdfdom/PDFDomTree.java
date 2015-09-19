@@ -20,6 +20,7 @@
 package org.fit.pdfdom;
 
 import java.io.IOException;
+import java.io.OutputStreamWriter;
 import java.io.Writer;
 import java.util.List;
 
@@ -166,8 +167,8 @@ public class PDFDomTree extends PDFBoxTree
             LSOutput output = impl.createLSOutput();
             writer.getDomConfig().setParameter("format-pretty-print", true);
             output.setCharacterStream(outputStream);
-            super.writeText(doc, outputStream); //this should not print anything to outputStream
-            writer.write(getDocument(), output); //this is the actual output
+            createDOM(doc);
+            writer.write(getDocument(), output);
         } catch (ClassCastException e) {
             throw new IOException("Error: cannot initialize the DOM serializer", e);
         } catch (ClassNotFoundException e) {
@@ -177,6 +178,21 @@ public class PDFDomTree extends PDFBoxTree
         } catch (IllegalAccessException e) {
             throw new IOException("Error: cannot initialize the DOM serializer", e);
         }
+    }
+    
+    /**
+     * Loads a PDF document and creates a DOM tree from it.
+     * @param doc the source document
+     * @return a DOM Document representing the DOM tree
+     * @throws IOException
+     */
+    public Document createDOM(PDDocument doc) throws IOException
+    {
+        /* We call the original PDFTextStripper.writeText but nothing should
+           be printed actually because our processing methods produce no output.
+           They create the DOM structures instead */
+        super.writeText(doc, new OutputStreamWriter(System.out));
+        return this.doc;
     }
     
     //===========================================================================================
