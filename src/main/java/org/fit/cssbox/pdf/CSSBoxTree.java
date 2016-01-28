@@ -299,7 +299,7 @@ public class CSSBoxTree extends PDFDomTree
         }
         root.setBase(baseurl);
         root.setParent(parent);
-        root.setContainingBlock(parent);
+        root.setContainingBlockBox(parent);
         root.setClipBlock(viewport);
         root.setOrder(next_order++);
         return root;
@@ -315,7 +315,7 @@ public class CSSBoxTree extends PDFDomTree
     {
         TextBox text = new TextBox(n, (Graphics2D) contblock.getGraphics().create(), contblock.getVisualContext().create());
         text.setOrder(next_order++);
-        text.setContainingBlock(contblock);
+        text.setContainingBlockBox(contblock);
         text.setClipBlock(contblock);
         text.setViewport(viewport);
         text.setBase(baseurl);
