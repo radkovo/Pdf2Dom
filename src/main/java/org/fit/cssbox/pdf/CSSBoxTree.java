@@ -496,7 +496,7 @@ public class CSSBoxTree extends PDFDomTree
         ret.push(createDeclaration("height", tf.createLength(height, unit)));
         ret.push(createDeclaration(bside + "-width", tf.createLength(lw, unit)));
         ret.push(createDeclaration(bside + "-style", tf.createIdent("solid")));
-        String color = colorString(getGraphicsState().getNonStrokingColor());
+        String color = colorString(getGraphicsState().getStrokingColor());
         ret.push(createDeclaration(bside + "-color", tf.createColor(color)));
 
         return ret;

@@ -513,8 +513,6 @@ public abstract class PDFBoxTree extends PDFTextStripper
         }
         
         super.processOperator(operator, arguments);
-        //update box color after operators have been applied 
-        style.setColor(colorString(getGraphicsState().getStrokingColor()));
     }   
 
     @Override
@@ -675,7 +673,7 @@ public abstract class PDFBoxTree extends PDFTextStripper
             if (family != null)
             	bstyle.setFontFamily(family);
         }
-        style.setColor(colorString(getGraphicsState().getStrokingColor()));
+        style.setColor(colorString(getGraphicsState().getNonStrokingColor()));
     }
     
     /**

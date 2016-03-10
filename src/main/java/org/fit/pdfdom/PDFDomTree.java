@@ -316,10 +316,8 @@ public class PDFDomTree extends PDFBoxTree
      */
     protected Element createRectangleElement(float x, float y, float width, float height, boolean stroke, boolean fill)
     {
-        String color = colorString(getGraphicsState().getStrokingColor());
         float lineWidth = transformLength((float) getGraphicsState().getLineWidth());
-    	float lw = (lineWidth < 0.5f) ? 0.5f : lineWidth;
-    	float wcor = stroke ? lw : 0.0f;
+    	float wcor = stroke ? lineWidth : 0.0f;
     	
     	StringBuilder pstyle = new StringBuilder(50);
     	pstyle.append("left:").append(style.formatLength(x)).append(';');
@@ -329,7 +327,8 @@ public class PDFDomTree extends PDFBoxTree
     	    
     	if (stroke)
     	{
-        	pstyle.append("border:").append(style.formatLength(lw)).append(" solid ").append(color).append(';');
+            String color = colorString(getGraphicsState().getStrokingColor());
+        	pstyle.append("border:").append(style.formatLength(lineWidth)).append(" solid ").append(color).append(';');
     	}
     	
     	if (fill)
@@ -364,8 +363,9 @@ public class PDFDomTree extends PDFBoxTree
         
         String bname;
         float lineWidth = transformLength((float) getGraphicsState().getLineWidth());
-        float lw = (lineWidth < 0.5f) ? 0.5f : lineWidth;
-        if (width == 0)
+        if (lineWidth < 0.5f)
+            lineWidth = 0.5f;
+        if (width < height)
         {
             y += lineWidth / 2;
             height -= lineWidth;
@@ -384,7 +384,7 @@ public class PDFDomTree extends PDFBoxTree
         pstyle.append("width:").append(style.formatLength(width)).append(';');
         pstyle.append("height:").append(style.formatLength(height)).append(';');
             
-        pstyle.append(bname).append(":").append(style.formatLength(lw)).append(" solid ").append(color).append(';');
+        pstyle.append(bname).append(":").append(style.formatLength(lineWidth)).append(" solid ").append(color).append(';');
             
         Element el = doc.createElement("div");
         el.setAttribute("class", "r");
