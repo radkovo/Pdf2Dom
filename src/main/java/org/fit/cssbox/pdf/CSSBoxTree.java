@@ -36,7 +36,6 @@ import cz.vutbr.web.css.TermNumeric.Unit;
 
 import org.apache.pdfbox.pdmodel.PDDocument;
 import org.apache.pdfbox.pdmodel.common.PDRectangle;
-import org.apache.pdfbox.pdmodel.graphics.color.PDColor;
 import org.fit.cssbox.layout.BlockBox;
 import org.fit.cssbox.layout.BlockReplacedBox;
 import org.fit.cssbox.layout.BrowserConfig;
@@ -434,7 +433,7 @@ public class CSSBoxTree extends PDFDomTree
      */
     protected NodeData createRectangleStyle(float x, float y, float width, float height, boolean stroke, boolean fill)
     {
-        lineWidth = transformLength((float) getGraphicsState().getLineWidth());
+        float lineWidth = transformLength((float) getGraphicsState().getLineWidth());
         float lw = (lineWidth < 1f) ? 1f : lineWidth;
         float wcor = stroke ? lw : 0.0f;
         
@@ -450,25 +449,13 @@ public class CSSBoxTree extends PDFDomTree
         {
             ret.push(createDeclaration("border-width", tf.createLength(lw, unit)));
             ret.push(createDeclaration("border-style", tf.createIdent("solid")));
-            String color = (strokingColor == null) ? "#000000" : strokingColor;
+            String color = colorString(getGraphicsState().getStrokingColor());
             ret.push(createDeclaration("border-color", tf.createColor(color)));
         }
         
         if (fill)
         {
-            PDColor pcolor = getGraphicsState().getNonStrokingColor();
-            String color = "#000000";
-            try
-            {
-                float[] rgb = pcolor.getColorSpace().toRGB(pcolor.getComponents());
-                color = colorString(rgb[0], rgb[1], rgb[2]);
-            } catch (IOException e)
-            {
-                // TODO Auto-generated catch block
-                e.printStackTrace();
-            }
-            
-            //String color = style.getColor();
+            String color = colorString(getGraphicsState().getNonStrokingColor());
             if (color != null)
                 ret.push(createDeclaration("background-color", tf.createColor(color)));
         }
@@ -484,7 +471,7 @@ public class CSSBoxTree extends PDFDomTree
         float height = Math.abs(y2 - y1);
 
         String bside;
-        lineWidth = transformLength((float) getGraphicsState().getLineWidth());
+        float lineWidth = transformLength((float) getGraphicsState().getLineWidth());
         float lw = (lineWidth < 1f) ? 1f : lineWidth;
         
         if (width < height)
@@ -509,7 +496,7 @@ public class CSSBoxTree extends PDFDomTree
         ret.push(createDeclaration("height", tf.createLength(height, unit)));
         ret.push(createDeclaration(bside + "-width", tf.createLength(lw, unit)));
         ret.push(createDeclaration(bside + "-style", tf.createIdent("solid")));
-        String color = (strokingColor == null) ? "#000000" : strokingColor;
+        String color = colorString(getGraphicsState().getNonStrokingColor());
         ret.push(createDeclaration(bside + "-color", tf.createColor(color)));
 
         return ret;

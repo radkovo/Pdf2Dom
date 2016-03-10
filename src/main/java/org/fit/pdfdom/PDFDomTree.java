@@ -316,11 +316,8 @@ public class PDFDomTree extends PDFBoxTree
      */
     protected Element createRectangleElement(float x, float y, float width, float height, boolean stroke, boolean fill)
     {
-    	String color = "black";
-    	if (strokingColor != null)
-    		color = strokingColor;
-
-        lineWidth = transformLength((float) getGraphicsState().getLineWidth());
+        String color = colorString(getGraphicsState().getStrokingColor());
+        float lineWidth = transformLength((float) getGraphicsState().getLineWidth());
     	float lw = (lineWidth < 0.5f) ? 0.5f : lineWidth;
     	float wcor = stroke ? lw : 0.0f;
     	
@@ -337,7 +334,8 @@ public class PDFDomTree extends PDFBoxTree
     	
     	if (fill)
     	{
-    	    pstyle.append("background-color:").append(style.getColor()).append(';');
+            String fcolor = colorString(getGraphicsState().getNonStrokingColor());
+    	    pstyle.append("background-color:").append(fcolor).append(';');
     	}
     	
         Element el = doc.createElement("div");
@@ -357,9 +355,7 @@ public class PDFDomTree extends PDFBoxTree
      */
     protected Element createLineElement(float x1, float y1, float x2, float y2)
     {
-        String color = "black";
-        if (strokingColor != null)
-            color = strokingColor;
+        String color = colorString(getGraphicsState().getStrokingColor());
 
         float x = Math.min(x1, x2);
         float y = Math.min(y1, y2);
@@ -367,7 +363,7 @@ public class PDFDomTree extends PDFBoxTree
         float height = Math.abs(y2 - y1);
         
         String bname;
-        lineWidth = transformLength((float) getGraphicsState().getLineWidth());
+        float lineWidth = transformLength((float) getGraphicsState().getLineWidth());
         float lw = (lineWidth < 0.5f) ? 0.5f : lineWidth;
         if (width == 0)
         {

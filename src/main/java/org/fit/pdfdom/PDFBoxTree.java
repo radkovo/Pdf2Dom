@@ -45,56 +45,14 @@ import org.apache.pdfbox.contentstream.operator.color.SetStrokingColorSpace;
 import org.apache.pdfbox.contentstream.operator.color.SetStrokingDeviceCMYKColor;
 import org.apache.pdfbox.contentstream.operator.color.SetStrokingDeviceGrayColor;
 import org.apache.pdfbox.contentstream.operator.color.SetStrokingDeviceRGBColor;
-import org.apache.pdfbox.contentstream.operator.graphics.AppendRectangleToPath;
-import org.apache.pdfbox.contentstream.operator.graphics.BeginInlineImage;
-import org.apache.pdfbox.contentstream.operator.graphics.ClipEvenOddRule;
-import org.apache.pdfbox.contentstream.operator.graphics.ClipNonZeroRule;
-import org.apache.pdfbox.contentstream.operator.graphics.CloseAndStrokePath;
-import org.apache.pdfbox.contentstream.operator.graphics.CloseFillEvenOddAndStrokePath;
-import org.apache.pdfbox.contentstream.operator.graphics.CloseFillNonZeroAndStrokePath;
-import org.apache.pdfbox.contentstream.operator.graphics.ClosePath;
-import org.apache.pdfbox.contentstream.operator.graphics.CurveTo;
-import org.apache.pdfbox.contentstream.operator.graphics.CurveToReplicateFinalPoint;
-import org.apache.pdfbox.contentstream.operator.graphics.CurveToReplicateInitialPoint;
-import org.apache.pdfbox.contentstream.operator.graphics.DrawObject;
-import org.apache.pdfbox.contentstream.operator.graphics.EndPath;
-import org.apache.pdfbox.contentstream.operator.graphics.FillEvenOddAndStrokePath;
-import org.apache.pdfbox.contentstream.operator.graphics.FillEvenOddRule;
-import org.apache.pdfbox.contentstream.operator.graphics.FillNonZeroAndStrokePath;
-import org.apache.pdfbox.contentstream.operator.graphics.FillNonZeroRule;
-import org.apache.pdfbox.contentstream.operator.graphics.LegacyFillNonZeroRule;
-import org.apache.pdfbox.contentstream.operator.graphics.LineTo;
-import org.apache.pdfbox.contentstream.operator.graphics.MoveTo;
-import org.apache.pdfbox.contentstream.operator.graphics.ShadingFill;
-import org.apache.pdfbox.contentstream.operator.graphics.StrokePath;
-import org.apache.pdfbox.contentstream.operator.state.Concatenate;
-import org.apache.pdfbox.contentstream.operator.state.Restore;
-import org.apache.pdfbox.contentstream.operator.state.Save;
 import org.apache.pdfbox.contentstream.operator.state.SetFlatness;
-import org.apache.pdfbox.contentstream.operator.state.SetGraphicsStateParameters;
 import org.apache.pdfbox.contentstream.operator.state.SetLineCapStyle;
 import org.apache.pdfbox.contentstream.operator.state.SetLineDashPattern;
 import org.apache.pdfbox.contentstream.operator.state.SetLineJoinStyle;
 import org.apache.pdfbox.contentstream.operator.state.SetLineMiterLimit;
 import org.apache.pdfbox.contentstream.operator.state.SetLineWidth;
-import org.apache.pdfbox.contentstream.operator.state.SetMatrix;
 import org.apache.pdfbox.contentstream.operator.state.SetRenderingIntent;
-import org.apache.pdfbox.contentstream.operator.text.BeginText;
-import org.apache.pdfbox.contentstream.operator.text.EndText;
-import org.apache.pdfbox.contentstream.operator.text.MoveText;
-import org.apache.pdfbox.contentstream.operator.text.MoveTextSetLeading;
-import org.apache.pdfbox.contentstream.operator.text.NextLine;
-import org.apache.pdfbox.contentstream.operator.text.SetCharSpacing;
 import org.apache.pdfbox.contentstream.operator.text.SetFontAndSize;
-import org.apache.pdfbox.contentstream.operator.text.SetTextHorizontalScaling;
-import org.apache.pdfbox.contentstream.operator.text.SetTextLeading;
-import org.apache.pdfbox.contentstream.operator.text.SetTextRenderingMode;
-import org.apache.pdfbox.contentstream.operator.text.SetTextRise;
-import org.apache.pdfbox.contentstream.operator.text.SetWordSpacing;
-import org.apache.pdfbox.contentstream.operator.text.ShowText;
-import org.apache.pdfbox.contentstream.operator.text.ShowTextAdjusted;
-import org.apache.pdfbox.contentstream.operator.text.ShowTextLine;
-import org.apache.pdfbox.contentstream.operator.text.ShowTextLineAndSpace;
 import org.apache.pdfbox.cos.COSBase;
 import org.apache.pdfbox.cos.COSName;
 import org.apache.pdfbox.cos.COSNumber;
@@ -183,12 +141,6 @@ public abstract class PDFBoxTree extends PDFTextStripper
     /** The style of the text line being created */
     protected BoxStyle curstyle;
 
-    /** The current stroking color set by the operators */
-    protected String strokingColor;
-    
-    /** The current graphics line width set by the operators */
-    protected float lineWidth;
-
     
     
     public PDFBoxTree() throws IOException
@@ -231,8 +183,6 @@ public abstract class PDFBoxTree extends PDFTextStripper
         style = new BoxStyle(UNIT);
         textLine = new StringBuilder();
         textMetrics = null;
-        strokingColor = null;
-        lineWidth = 0;
         graphicsPath = new Vector<PathSegment>();
         startPage = 0;
         endPage = Integer.MAX_VALUE;
@@ -401,60 +351,8 @@ public abstract class PDFBoxTree extends PDFTextStripper
             System.out.println();
         }*/
 
-        //set gray for nonstroking operations
-        if (operation.equals("g"))
-        {
-            float gray = floatValue(arguments.get(0));
-            style.setColor(colorString(gray, gray, gray));
-        }
-        //set gray for stroking operations
-        else if (operation.equals("G"))
-        {
-            float gray = floatValue(arguments.get(0));
-            strokingColor = colorString(gray, gray, gray);
-        }
-
-        //set color for nonstroking operations
-        else if (operation.equals("rg"))
-        {
-            style.setColor(colorString(floatValue(arguments.get(0)),
-                                       floatValue(arguments.get(1)),
-                                       floatValue(arguments.get(2))));
-        }
-        //set color for stroking operations
-        else if (operation.equals("RG"))
-        {
-            strokingColor = colorString(floatValue(arguments.get(0)),
-                                        floatValue(arguments.get(1)),
-                                        floatValue(arguments.get(2)));
-        }
-
-        //set color depending on the color model
-        else if (operation.equals("scn") || operation.equals("sc")) // TODO: rgb only for now 
-        {
-            if (arguments.size() == 3)
-            {
-                style.setColor(colorString(floatValue(arguments.get(0)),
-                        floatValue(arguments.get(1)),
-                        floatValue(arguments.get(2))));
-            }
-            else
-                log.warn("scn: unsupported color specification: " + arguments);
-        }
-        else if (operation.equals("SCN") || operation.equals("SC")) // TODO: rgb only for now 
-        {
-            if (arguments.size() == 3)
-            {
-                strokingColor = colorString(floatValue(arguments.get(0)),
-                                            floatValue(arguments.get(1)),
-                                            floatValue(arguments.get(2)));
-            }
-            else
-                log.warn("SCN: unsupported color specification: " + arguments);
-        }
-
         //word spacing
-        else if (operation.equals("Tw"))
+        if (operation.equals("Tw"))
         {
             style.setWordSpacing(getLength(arguments.get(0)));
         }
@@ -615,6 +513,8 @@ public abstract class PDFBoxTree extends PDFTextStripper
         }
         
         super.processOperator(operator, arguments);
+        //update box color after operators have been applied 
+        style.setColor(colorString(getGraphicsState().getStrokingColor()));
     }   
 
     @Override
@@ -775,7 +675,7 @@ public abstract class PDFBoxTree extends PDFTextStripper
             if (family != null)
             	bstyle.setFontFamily(family);
         }
-
+        style.setColor(colorString(getGraphicsState().getStrokingColor()));
     }
     
     /**
