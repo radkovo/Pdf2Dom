@@ -219,7 +219,9 @@ public class CSSBoxTree extends PDFDomTree
         {
             for (PathSegment segm : path)
             {
-                if (segm.getX1() == segm.getX2() || segm.getY1() == segm.getY2())
+                float difx = Math.abs(segm.getX1() - segm.getX2());
+                float dify = Math.abs(segm.getY1() - segm.getY2());
+                if (difx < 0.5f || dify < 0.5f)
                 {
                     //DOM element
                     Element el = createLineElement(segm.getX1(), segm.getY1(), segm.getX2(), segm.getY2());
@@ -431,21 +433,21 @@ public class CSSBoxTree extends PDFDomTree
      */
     protected NodeData createRectangleStyle(float x, float y, float width, float height, boolean stroke, boolean fill)
     {
+        lineWidth = transformLength((float) getGraphicsState().getLineWidth());
+        float lw = (lineWidth < 1f) ? 1f : lineWidth;
+        float wcor = stroke ? lw : 0.0f;
+        
         NodeData ret = CSSFactory.createNodeData();
         TermFactory tf = CSSFactory.getTermFactory();
         ret.push(createDeclaration("position", tf.createIdent("absolute")));
         ret.push(createDeclaration("left", tf.createLength(x, unit)));
         ret.push(createDeclaration("top", tf.createLength(y, unit)));
-        ret.push(createDeclaration("width", tf.createLength(width, unit)));
-        ret.push(createDeclaration("height", tf.createLength(height, unit)));
+        ret.push(createDeclaration("width", tf.createLength(width - wcor, unit)));
+        ret.push(createDeclaration("height", tf.createLength(height - wcor, unit)));
         
         if (stroke)
         {
-            lineWidth = transformLength((float) getGraphicsState().getLineWidth());
-            if (lineWidth == 0)
-                ret.push(createDeclaration("border-width", tf.createLength(1f, Unit.px)));
-            else
-                ret.push(createDeclaration("border-width", tf.createLength(lineWidth, unit)));
+            ret.push(createDeclaration("border-width", tf.createLength(lw, unit)));
             ret.push(createDeclaration("border-style", tf.createIdent("solid")));
             String color = (strokingColor == null) ? "#000000" : strokingColor;
             ret.push(createDeclaration("border-color", tf.createColor(color)));
@@ -470,16 +472,18 @@ public class CSSBoxTree extends PDFDomTree
 
         String bside;
         lineWidth = transformLength((float) getGraphicsState().getLineWidth());
-        if (width == 0)
+        float lw = (lineWidth < 1f) ? 1f : lineWidth;
+        
+        if (width < height)
         {
-            y += lineWidth / 2;
-            height -= lineWidth;
+            y += lw / 2;
+            height -= lw;
             bside = "border-left";
         }
         else
         {
-            x += lineWidth / 2;
-            width -= lineWidth / 2;
+            x += lw / 2;
+            width -= lw;
             bside = "border-top";
         }
         
@@ -490,11 +494,7 @@ public class CSSBoxTree extends PDFDomTree
         ret.push(createDeclaration("top", tf.createLength(y, unit)));
         ret.push(createDeclaration("width", tf.createLength(width, unit)));
         ret.push(createDeclaration("height", tf.createLength(height, unit)));
-        
-        if (lineWidth == 0)
-            ret.push(createDeclaration(bside + "-width", tf.createLength(1f, Unit.px)));
-        else
-            ret.push(createDeclaration(bside + "-width", tf.createLength(lineWidth, unit)));
+        ret.push(createDeclaration(bside + "-width", tf.createLength(lw, unit)));
         ret.push(createDeclaration(bside + "-style", tf.createIdent("solid")));
         String color = (strokingColor == null) ? "#000000" : strokingColor;
         ret.push(createDeclaration(bside + "-color", tf.createColor(color)));

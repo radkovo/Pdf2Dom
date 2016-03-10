@@ -222,7 +222,9 @@ public class PDFDomTree extends PDFBoxTree
         {
             for (PathSegment segm : path)
             {
-                if (segm.getX1() == segm.getX2() || segm.getY1() == segm.getY2())
+                float difx = Math.abs(segm.getX1() - segm.getX2());
+                float dify = Math.abs(segm.getY1() - segm.getY2());
+                if (difx < 0.5f || dify < 0.5f)
                     curpage.appendChild(createLineElement(segm.getX1(), segm.getY1(), segm.getX2(), segm.getY2()));
                 else
                     log.warn("Skipped non-orthogonal line segment");
@@ -318,20 +320,19 @@ public class PDFDomTree extends PDFBoxTree
     	if (strokingColor != null)
     		color = strokingColor;
 
+        lineWidth = transformLength((float) getGraphicsState().getLineWidth());
+    	float lw = (lineWidth < 0.5f) ? 0.5f : lineWidth;
+    	float wcor = stroke ? lw : 0.0f;
+    	
     	StringBuilder pstyle = new StringBuilder(50);
     	pstyle.append("left:").append(style.formatLength(x)).append(';');
         pstyle.append("top:").append(style.formatLength(y)).append(';');
-        pstyle.append("width:").append(style.formatLength(width)).append(';');
-        pstyle.append("height:").append(style.formatLength(height)).append(';');
+        pstyle.append("width:").append(style.formatLength(width - wcor)).append(';');
+        pstyle.append("height:").append(style.formatLength(height - wcor)).append(';');
     	    
     	if (stroke)
     	{
-        	//float old = lineWidth;
-        	lineWidth = transformLength((float) getGraphicsState().getLineWidth());
-        	/*if (lineWidth != old)
-        		System.out.println("LW:" + old + "->" + lineWidth);*/
-        	String lw = lineWidth == 0 ? "1px" : lineWidth + "pt";
-        	pstyle.append("border:").append(lw).append(" solid ").append(color).append(';');
+        	pstyle.append("border:").append(style.formatLength(lw)).append(" solid ").append(color).append(';');
     	}
     	
     	if (fill)
@@ -367,6 +368,7 @@ public class PDFDomTree extends PDFBoxTree
         
         String bname;
         lineWidth = transformLength((float) getGraphicsState().getLineWidth());
+        float lw = (lineWidth < 0.5f) ? 0.5f : lineWidth;
         if (width == 0)
         {
             y += lineWidth / 2;
@@ -376,7 +378,7 @@ public class PDFDomTree extends PDFBoxTree
         else
         {
             x += lineWidth / 2;
-            width -= lineWidth / 2;
+            width -= lineWidth;
             bname = "border-top";
         }
         
@@ -386,8 +388,7 @@ public class PDFDomTree extends PDFBoxTree
         pstyle.append("width:").append(style.formatLength(width)).append(';');
         pstyle.append("height:").append(style.formatLength(height)).append(';');
             
-        String lw = lineWidth == 0 ? "1px" : lineWidth + "pt";
-        pstyle.append(bname).append(":").append(lw).append(" solid ").append(color).append(';');
+        pstyle.append(bname).append(":").append(style.formatLength(lw)).append(" solid ").append(color).append(';');
             
         Element el = doc.createElement("div");
         el.setAttribute("class", "r");
