@@ -505,8 +505,12 @@ public abstract class PDFBoxTree extends PDFTextStripper
                         y -= height;
                     }
                     
+                    PDRectangle cb = pdpage.getCropBox();
                     switch (pdpage.getRotation())
                     {
+                        case 0:
+                            y = cb.getHeight() - y;
+                            break;
                         case 90:
                             y = -y;
                             break;
@@ -751,8 +755,12 @@ public abstract class PDFBoxTree extends PDFTextStripper
         
         float rx = ret.getTranslateX();
         float ry = ret.getTranslateY();
+        PDRectangle cb = pdpage.getCropBox();
         switch (pdpage.getRotation())
         {
+            case 0:
+                ry = cb.getHeight() - ry;
+                break;
             case 90:
                 ry = -ry;
                 break;
