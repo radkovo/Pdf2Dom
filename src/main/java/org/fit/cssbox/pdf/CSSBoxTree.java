@@ -36,6 +36,7 @@ import cz.vutbr.web.css.TermNumeric.Unit;
 
 import org.apache.pdfbox.pdmodel.PDDocument;
 import org.apache.pdfbox.pdmodel.common.PDRectangle;
+import org.apache.pdfbox.pdmodel.graphics.color.PDColor;
 import org.fit.cssbox.layout.BlockBox;
 import org.fit.cssbox.layout.BlockReplacedBox;
 import org.fit.cssbox.layout.BrowserConfig;
@@ -455,7 +456,19 @@ public class CSSBoxTree extends PDFDomTree
         
         if (fill)
         {
-            String color = style.getColor();
+            PDColor pcolor = getGraphicsState().getNonStrokingColor();
+            String color = "#000000";
+            try
+            {
+                float[] rgb = pcolor.getColorSpace().toRGB(pcolor.getComponents());
+                color = colorString(rgb[0], rgb[1], rgb[2]);
+            } catch (IOException e)
+            {
+                // TODO Auto-generated catch block
+                e.printStackTrace();
+            }
+            
+            //String color = style.getColor();
             if (color != null)
                 ret.push(createDeclaration("background-color", tf.createColor(color)));
         }
