@@ -21,6 +21,7 @@ package org.fit.cssbox.pdf;
 
 import java.awt.Dimension;
 import java.awt.Graphics2D;
+import java.awt.Rectangle;
 import java.awt.image.BufferedImage;
 import java.io.IOException;
 import java.net.URL;
@@ -132,7 +133,7 @@ public class PdfBrowserCanvas extends BrowserCanvas
     //===========================================================================================
 
     @Override
-    public void createLayout(Dimension dim)
+    public void createLayout(Dimension dim, Rectangle visibleRect)
     {
         if (pdfdocument != null) //PDF mode: create the layout only when the DOM tree is already finished
         {
@@ -142,7 +143,7 @@ public class PdfBrowserCanvas extends BrowserCanvas
         else //DOM mode
         {
         	if (root != null)
-        		super.createLayout(dim);
+        		super.createLayout(dim, visibleRect);
         }
     }
     
