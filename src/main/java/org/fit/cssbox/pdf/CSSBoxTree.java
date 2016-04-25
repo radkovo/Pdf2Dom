@@ -341,25 +341,25 @@ public class CSSBoxTree extends PDFDomTree
         ret.push(createDeclaration("left", tf.createLength(style.getLeft(), unit)));
         ret.push(createDeclaration("top", tf.createLength(style.getTop(), unit)));
         ret.push(createDeclaration("line-height", tf.createLength(style.getLineHeight(), unit)));
-		if (style.getFontFamily() != null)
-			ret.push(createDeclaration("font-family", tf.createString(style.getFontFamily())));
-		if (style.getFontSize() != 0)
-		{
-		    float size = (float) style.getFontSize();
-		    if (style.getFontFamily() == null)
-		        size = size * unknownFontScale;
-			ret.push(createDeclaration("font-size", tf.createLength(size, unit)));
-		}
-		if (style.getFontWeight() != null)
-			ret.push(createDeclaration("font-weight", tf.createIdent(style.getFontWeight())));
-		if (style.getFontStyle() != null)
-			ret.push(createDeclaration("font-style", tf.createIdent(style.getFontStyle())));
-		if (style.getWordSpacing() != 0)
-			ret.push(createDeclaration("word-spacing", tf.createLength((float) style.getWordSpacing(), unit)));
-		if (style.getLetterSpacing() != 0)
-			ret.push(createDeclaration("letter-spacing", tf.createLength((float) style.getLetterSpacing(), unit)));
-		if (style.getColor() != null) 
-		{
+        if (style.getFontFamily() != null)
+            ret.push(createDeclaration("font-family", tf.createString(style.getFontFamily())));
+        if (style.getFontSize() != 0)
+        {
+            float size = (float) style.getFontSize();
+            if (style.getFontFamily() == null)
+                size = size * unknownFontScale;
+            ret.push(createDeclaration("font-size", tf.createLength(size, unit)));
+        }
+        if (style.getFontWeight() != null)
+            ret.push(createDeclaration("font-weight", tf.createIdent(style.getFontWeight())));
+        if (style.getFontStyle() != null)
+            ret.push(createDeclaration("font-style", tf.createIdent(style.getFontStyle())));
+        if (style.getWordSpacing() != 0)
+            ret.push(createDeclaration("word-spacing", tf.createLength((float) style.getWordSpacing(), unit)));
+        if (style.getLetterSpacing() != 0)
+            ret.push(createDeclaration("letter-spacing", tf.createLength((float) style.getLetterSpacing(), unit)));
+        if (style.getColor() != null)
+        {
             String fillColor = style.getColor();
 
             // text stroke css attrs don't render atm but can use stroke as fall back for fill if fill is transparent
@@ -392,7 +392,8 @@ public class CSSBoxTree extends PDFDomTree
             termColor.setValue(new Color(colorValues[0], colorValues[1], colorValues[2], colorValues[3]));
 
             return termColor;
-        } else
+        }
+        else
             return tf.createColor(color);
     }
 
