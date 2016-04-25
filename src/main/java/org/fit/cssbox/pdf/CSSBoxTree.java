@@ -21,6 +21,7 @@ package org.fit.cssbox.pdf;
 
 import java.awt.Dimension;
 import java.awt.Graphics2D;
+import java.awt.Color;
 import java.io.IOException;
 import java.net.URL;
 import java.util.List;
@@ -32,6 +33,7 @@ import cz.vutbr.web.css.Declaration;
 import cz.vutbr.web.css.NodeData;
 import cz.vutbr.web.css.Term;
 import cz.vutbr.web.css.TermFactory;
+import cz.vutbr.web.css.TermColor;
 import cz.vutbr.web.css.TermNumeric.Unit;
 
 import org.apache.pdfbox.pdmodel.PDDocument;
@@ -52,6 +54,7 @@ import org.slf4j.LoggerFactory;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.Text;
+import static org.fit.pdfdom.BoxStyle.transparentColor;
 
 /**
  * This class implements direct creation of a CSSBox tree from a PDF file. It creates a tree if boxes compatible
@@ -355,14 +358,44 @@ public class CSSBoxTree extends PDFDomTree
 			ret.push(createDeclaration("word-spacing", tf.createLength((float) style.getWordSpacing(), unit)));
 		if (style.getLetterSpacing() != 0)
 			ret.push(createDeclaration("letter-spacing", tf.createLength((float) style.getLetterSpacing(), unit)));
-		if (style.getColor() != null)
-			ret.push(createDeclaration("color", tf.createColor(style.getColor())));
-		
+		if (style.getColor() != null) 
+		{
+            String fillColor = style.getColor();
+
+            // text stroke css attrs don't render atm but can use stroke as fall back for fill if fill is transparent
+            boolean hasStrokeColor = style.getStrokeColor() != null && fillColor.equals(transparentColor);
+            if (fillColor.equals(transparentColor) && hasStrokeColor)
+                fillColor = style.getStrokeColor();
+
+            ret.push(createDeclaration("color", createTermColor(fillColor)));
+        }
+
 		ret.push(createDeclaration("width", tf.createLength(width, unit)));
 		
         return ret;
     }
-    
+
+    private static TermColor createTermColor(String color)
+    {
+        TermFactory tf = CSSFactory.getTermFactory();
+
+        if (color.startsWith("rgba"))
+        {
+            color = color.replaceAll("rgba|\\)|\\(", "");
+            String[] params = color.split(",");
+
+            int[] colorValues = new int[params.length];
+            for (int i = 0; i < params.length; i++)
+                colorValues[i] = Integer.parseInt(params[i]);
+
+            TermColor termColor = tf.createColor(0, 0, 0);
+            termColor.setValue(new Color(colorValues[0], colorValues[1], colorValues[2], colorValues[3]));
+
+            return termColor;
+        } else
+            return tf.createColor(color);
+    }
+
     /**
      * Creates an empty block style definition.
      * @return 

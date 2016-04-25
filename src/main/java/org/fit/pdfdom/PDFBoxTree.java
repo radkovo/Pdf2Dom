@@ -62,11 +62,13 @@ import org.apache.pdfbox.pdmodel.common.PDRectangle;
 import org.apache.pdfbox.pdmodel.graphics.PDXObject;
 import org.apache.pdfbox.pdmodel.graphics.color.PDColor;
 import org.apache.pdfbox.pdmodel.graphics.image.PDImageXObject;
+import org.apache.pdfbox.pdmodel.graphics.state.RenderingMode;
 import org.apache.pdfbox.text.PDFTextStripper;
 import org.apache.pdfbox.text.TextPosition;
 import org.apache.pdfbox.util.Matrix;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import static org.apache.pdfbox.pdmodel.graphics.state.RenderingMode.*;
 
 /**
  * A generic tree of boxes created from a PDF file. It processes the PDF document and calls
@@ -672,9 +674,37 @@ public abstract class PDFBoxTree extends PDFTextStripper
             if (family != null)
             	bstyle.setFontFamily(family);
         }
-        style.setColor(colorString(getGraphicsState().getNonStrokingColor()));
+
+        updateStyleForRenderingMode();
     }
-    
+
+    private void updateStyleForRenderingMode()
+    {
+        String fillColor = colorString(getGraphicsState().getNonStrokingColor());
+        String strokeColor = colorString(getGraphicsState().getStrokingColor());
+
+        if (isTextFillEnabled())
+            style.setColor(fillColor);
+        else
+            style.setColor(BoxStyle.transparentColor);
+        if (isTextStrokeEnabled())
+            style.setStrokeColor(strokeColor);
+        else
+            style.setStrokeColor(BoxStyle.transparentColor);
+    }
+
+    private boolean isTextStrokeEnabled()
+    {
+        RenderingMode mode = getGraphicsState().getTextState().getRenderingMode();
+        return mode == STROKE || mode == STROKE_CLIP || mode == FILL_STROKE || mode == FILL_STROKE_CLIP;
+    }
+
+    private boolean isTextFillEnabled()
+    {
+        RenderingMode mode = getGraphicsState().getTextState().getRenderingMode();
+        return mode == FILL || mode == FILL_CLIP || mode == FILL_STROKE || mode == FILL_STROKE_CLIP;
+    }
+
     /**
      * Obtains the media box valid for the current page.
      * @return the media box rectangle
