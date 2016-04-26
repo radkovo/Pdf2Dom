@@ -29,7 +29,8 @@ public class BoxStyle
 	public static final String defaultFontWeight = "normal";
 	public static final String defaultFontStyle = "normal";
 	public static final String defaultPosition = "absolute";
-	
+	public static final String transparentColor = "rgba(0,0,0,0)";
+
 	private String units;
 	
 	//font
@@ -41,6 +42,7 @@ public class BoxStyle
 	private float wordSpacing;
 	private	float letterSpacing;
 	private String color;
+	private String strokeColor;
 	//position
 	private String position;
 	private float left;
@@ -80,6 +82,7 @@ public class BoxStyle
 		position = src.position == null ? null : new String(src.position);
 		left = src.left;
 		top = src.top;
+		strokeColor = src.strokeColor;
 	}
 	
 	public String toString()
@@ -104,6 +107,9 @@ public class BoxStyle
 			appendLength(ret, "letter-spacing", letterSpacing);
 		if (color != null && !defaultColor.equals(color))
 			appendString(ret, "color", color);
+		if (strokeColor != null && !strokeColor.equals(transparentColor))
+			ret.append(createTextStrokeCss(strokeColor));
+
 		return ret.toString();
 	}
 	
@@ -127,6 +133,20 @@ public class BoxStyle
 	{
 		//return String.format(Locale.US, "%1.1f%s", length, units); //nice but slow
 		return (float) length + units;
+	}
+
+	private String createTextStrokeCss(String color)
+	{
+		// text shadow fall back for non webkit, gets disabled in default style sheet
+		// since can't use @media in inline styles
+		String strokeCss = "-webkit-text-stroke: %color% 1px ;" +
+				"text-shadow:" +
+				"-1px -1px 0 %color%, " +
+				"1px -1px 0 %color%," +
+				"-1px 1px 0 %color%, " +
+				"1px 1px 0 %color%;";
+
+		return strokeCss.replaceAll("%color%", color);
 	}
 	
 	//================================================================
@@ -274,6 +294,21 @@ public class BoxStyle
 	{
 		this.color = color;
 	}
+	/**
+	 * @return the strokeColor
+	 */
+	public String getStrokeColor()
+	{
+		return strokeColor;
+	}
+
+	/**
+	 * @param strokeColor the strokeColor to set
+	 */
+	public void setStrokeColor(String strokeColor)
+	{
+		this.strokeColor = strokeColor;
+	}
 
 	/**
 	 * @return the left
@@ -315,6 +350,7 @@ public class BoxStyle
         final int prime = 31;
         int result = 1;
         result = prime * result + ((color == null) ? 0 : color.hashCode());
+        result = prime * result + ((strokeColor == null) ? 0 : strokeColor.hashCode());
         result = prime * result
                 + ((fontFamily == null) ? 0 : fontFamily.hashCode());
         result = prime * result + Float.floatToIntBits(fontSize);
@@ -339,6 +375,11 @@ public class BoxStyle
             if (other.color != null) return false;
         }
         else if (!color.equals(other.color)) return false;
+		if (strokeColor == null)
+        {
+            if (other.strokeColor != null) return false;
+        }
+        else if (!strokeColor.equals(other.strokeColor)) return false;
         if (fontFamily == null)
         {
             if (other.fontFamily != null) return false;
