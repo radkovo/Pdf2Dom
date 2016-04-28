@@ -268,7 +268,8 @@ public class PDFDomTree extends PDFBoxTree
                 float x = w; w = h; h = x;
             }
             
-            pstyle = "width:" + w + UNIT + ";" + "height:" + h + UNIT;
+            pstyle = "width:" + w + UNIT + ";" + "height:" + h + UNIT + ";";
+            pstyle += "overflow:hidden;";
         }
         else
             log.warn("No media box found");
@@ -320,14 +321,17 @@ public class PDFDomTree extends PDFBoxTree
      */
     protected Element createRectangleElement(float x, float y, float width, float height, boolean stroke, boolean fill)
     {
-        float lineWidth = transformLength((float) getGraphicsState().getLineWidth());
+        float lineWidth = transformWidth(getGraphicsState().getLineWidth());
     	float wcor = stroke ? lineWidth : 0.0f;
-    	
-    	StringBuilder pstyle = new StringBuilder(50);
-    	pstyle.append("left:").append(style.formatLength(x)).append(';');
-        pstyle.append("top:").append(style.formatLength(y)).append(';');
-        pstyle.append("width:").append(style.formatLength(width - wcor)).append(';');
-        pstyle.append("height:").append(style.formatLength(height - wcor)).append(';');
+        float strokeOffset = wcor == 0 ? 0 : wcor / 2;
+        width = width - wcor < 0 ? 1 : width - wcor;
+        height = height - wcor < 0 ? 1 : height - wcor;
+
+        StringBuilder pstyle = new StringBuilder(50);
+    	pstyle.append("left:").append(style.formatLength(x - strokeOffset)).append(';');
+        pstyle.append("top:").append(style.formatLength(y - strokeOffset)).append(';');
+        pstyle.append("width:").append(style.formatLength(width)).append(';');
+        pstyle.append("height:").append(style.formatLength(height)).append(';');
     	    
     	if (stroke)
     	{
