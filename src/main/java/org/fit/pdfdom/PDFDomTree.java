@@ -225,14 +225,7 @@ public class PDFDomTree extends PDFBoxTree
         else if (stroke)
         {
             for (PathSegment segm : path)
-            {
-                float difx = Math.abs(segm.getX1() - segm.getX2());
-                float dify = Math.abs(segm.getY1() - segm.getY2());
-                if (difx < 0.5f || dify < 0.5f)
-                    curpage.appendChild(createLineElement(segm.getX1(), segm.getY1(), segm.getX2(), segm.getY2()));
-                else
-                    log.warn("Skipped non-orthogonal line segment");
-            }
+                curpage.appendChild(createLineElement(segm.getX1(), segm.getY1(), segm.getX2(), segm.getY2()));
         }
     }
     
@@ -360,43 +353,39 @@ public class PDFDomTree extends PDFBoxTree
     {
         String color = colorString(getGraphicsState().getStrokingColor());
 
-        float x = Math.min(x1, x2);
-        float y = Math.min(y1, y2);
-        float width = Math.abs(x2 - x1);
-        float height = Math.abs(y2 - y1);
-        
-        String bname;
-        float lineWidth = transformLength((float) getGraphicsState().getLineWidth());
+        float lineWidth = transformWidth(getGraphicsState().getLineWidth());
         if (lineWidth < 0.5f)
             lineWidth = 0.5f;
-        if (width < height)
-        {
-            y += lineWidth / 2;
-            height -= lineWidth;
-            bname = "border-left";
-        }
-        else
-        {
-            x += lineWidth / 2;
-            width -= lineWidth;
-            bname = "border-top";
-        }
-        
+
+        float height = 1;
+        float width = distanceFormula(x1, y1, x2, y2);
+        // after rotation top left will be center of line so find the midpoint and correct for the line to border transform
+        float x = Math.abs((x2 + x1) / 2) - width / 2;
+        float y = Math.abs((y2 + y1) / 2) - (lineWidth + height) / 2;
+
+        double lineAngle = Math.atan((y2 - y1) / (x2 - x1));
+
         StringBuilder pstyle = new StringBuilder(50);
         pstyle.append("left:").append(style.formatLength(x)).append(';');
         pstyle.append("top:").append(style.formatLength(y)).append(';');
         pstyle.append("width:").append(style.formatLength(width)).append(';');
         pstyle.append("height:").append(style.formatLength(height)).append(';');
-            
-        pstyle.append(bname).append(":").append(style.formatLength(lineWidth)).append(" solid ").append(color).append(';');
-            
+        pstyle.append("transform:").append("rotate(").append(Math.toDegrees(lineAngle)).append("deg);");
+
+        pstyle.append("border-bottom:").append(style.formatLength(lineWidth)).append(" solid ").append(color).append(';');
+
         Element el = doc.createElement("div");
         el.setAttribute("class", "r");
         el.setAttribute("style", pstyle.toString());
         el.appendChild(doc.createEntityReference("nbsp"));
         return el;
     }
-    
+
+    private float distanceFormula(float x1, float y1, float x2, float y2)
+    {
+        return (float) Math.sqrt((x1 - x2) * (x1 - x2) + (y1 - y2) * (y1 - y2));
+    }
+
     /**
      * Creates an element that represents an image drawn at the specified coordinates in the page.
      * @param x the X coordinate of the image
