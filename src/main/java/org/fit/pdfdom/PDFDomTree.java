@@ -351,39 +351,22 @@ public class PDFDomTree extends PDFBoxTree
      */
     protected Element createLineElement(float x1, float y1, float x2, float y2)
     {
+        HtmlDivLine line = new HtmlDivLine(x1, y1, x2, y2);
         String color = colorString(getGraphicsState().getStrokingColor());
 
-        float lineWidth = transformWidth(getGraphicsState().getLineWidth());
-        if (lineWidth < 0.5f)
-            lineWidth = 0.5f;
-
-        float height = 1;
-        float width = distanceFormula(x1, y1, x2, y2);
-        // after rotation top left will be center of line so find the midpoint and correct for the line to border transform
-        float x = Math.abs((x2 + x1) / 2) - width / 2;
-        float y = Math.abs((y2 + y1) / 2) - (lineWidth + height) / 2;
-
-        double lineAngle = Math.atan((y2 - y1) / (x2 - x1));
-
         StringBuilder pstyle = new StringBuilder(50);
-        pstyle.append("left:").append(style.formatLength(x)).append(';');
-        pstyle.append("top:").append(style.formatLength(y)).append(';');
-        pstyle.append("width:").append(style.formatLength(width)).append(';');
-        pstyle.append("height:").append(style.formatLength(height)).append(';');
-        pstyle.append("transform:").append("rotate(").append(Math.toDegrees(lineAngle)).append("deg);");
-
-        pstyle.append("border-bottom:").append(style.formatLength(lineWidth)).append(" solid ").append(color).append(';');
+        pstyle.append("left:").append(style.formatLength(line.getLeft())).append(';');
+        pstyle.append("top:").append(style.formatLength(line.getTop())).append(';');
+        pstyle.append("width:").append(style.formatLength(line.getWidth())).append(';');
+        pstyle.append("height:").append(style.formatLength(line.getHeight())).append(';');
+        pstyle.append("transform:").append("rotate(").append(line.getAngleDegrees()).append("deg);");
+        pstyle.append("border-bottom:").append(style.formatLength(line.getLineStrokeWidth())).append(" solid ").append(color).append(';');
 
         Element el = doc.createElement("div");
         el.setAttribute("class", "r");
         el.setAttribute("style", pstyle.toString());
         el.appendChild(doc.createEntityReference("nbsp"));
         return el;
-    }
-
-    private float distanceFormula(float x1, float y1, float x2, float y2)
-    {
-        return (float) Math.sqrt((x1 - x2) * (x1 - x2) + (y1 - y2) * (y1 - y2));
     }
 
     /**
@@ -419,5 +402,62 @@ public class PDFDomTree extends PDFBoxTree
         
         return el;
     }
-    
+
+    /**
+     * Maps input line to an HTML div rectangle, since HTML does not support standard lines
+     */
+    protected class HtmlDivLine
+    {
+        private final float x1;
+        private final float y1;
+        private final float x2;
+        private final float y2;
+
+        public HtmlDivLine(float x1, float y1, float x2, float y2)
+        {
+            this.x1 = x1;
+            this.y1 = y1;
+            this.x2 = x2;
+            this.y2 = y2;
+        }
+
+        public int getHeight()
+        {
+            return 1;
+        }
+
+        public float getWidth()
+        {
+            return distanceFormula(x1, y1, x2, y2);
+        }
+
+        public float getLeft()
+        {
+            return Math.abs((x2 + x1) / 2) - getWidth() / 2;
+        }
+
+        public float getTop()
+        {
+            // after rotation top left will be center of line so find the midpoint and correct for the line to border transform
+            return Math.abs((y2 + y1) / 2) - (getLineStrokeWidth() + getHeight()) / 2;
+        }
+
+        public double getAngleDegrees()
+        {
+            return Math.toDegrees(Math.atan((y2 - y1) / (x2 - x1)));
+        }
+
+        public float getLineStrokeWidth()
+        {
+            float lineWidth = transformWidth(getGraphicsState().getLineWidth());
+            if (lineWidth < 0.5f)
+                lineWidth = 0.5f;
+            return lineWidth;
+        }
+
+        private float distanceFormula(float x1, float y1, float x2, float y2)
+        {
+            return (float) Math.sqrt((x1 - x2) * (x1 - x2) + (y1 - y2) * (y1 - y2));
+        }
+    }
 }
