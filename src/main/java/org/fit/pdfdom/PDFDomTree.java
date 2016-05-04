@@ -363,8 +363,9 @@ public class PDFDomTree extends PDFBoxTree
         pstyle.append("top:").append(style.formatLength(line.getTop())).append(';');
         pstyle.append("width:").append(style.formatLength(line.getWidth())).append(';');
         pstyle.append("height:").append(style.formatLength(line.getHeight())).append(';');
-        pstyle.append("transform:").append("rotate(").append(line.getAngleDegrees()).append("deg);");
-        pstyle.append("border-bottom:").append(style.formatLength(line.getLineStrokeWidth())).append(" solid ").append(color).append(';');
+        pstyle.append(line.getBorderSide()).append(':').append(style.formatLength(line.getLineStrokeWidth())).append(" solid ").append(color).append(';');
+        if (line.getAngleDegrees() != 0)
+            pstyle.append("transform:").append("rotate(").append(line.getAngleDegrees()).append("deg);");
 
         Element el = doc.createElement("div");
         el.setAttribute("class", "r");
@@ -416,6 +417,11 @@ public class PDFDomTree extends PDFBoxTree
         private final float y1;
         private final float x2;
         private final float y2;
+        private final float width;
+        private final float height;
+        //horizontal or vertical lines are treated separately (no rotations used)
+        private final boolean horizontal;
+        private final boolean vertical;
 
         public HtmlDivLine(float x1, float y1, float x2, float y2)
         {
@@ -423,32 +429,50 @@ public class PDFDomTree extends PDFBoxTree
             this.y1 = y1;
             this.x2 = x2;
             this.y2 = y2;
+            this.width = Math.abs(x2 - x1);
+            this.height = Math.abs(y2 - y1);
+            this.horizontal = (height < 0.5f);
+            this.vertical = (width < 0.5f);
         }
 
-        public int getHeight()
+        public float getHeight()
         {
-            return 1;
+            return vertical ? height : 0;
         }
 
         public float getWidth()
         {
-            return distanceFormula(x1, y1, x2, y2);
+            if (vertical)
+                return 0;
+            else if (horizontal)
+                return width;
+            else
+                return distanceFormula(x1, y1, x2, y2);
         }
 
         public float getLeft()
         {
-            return Math.abs((x2 + x1) / 2) - getWidth() / 2;
+            if (horizontal || vertical)
+                return Math.min(x1, x2);
+            else
+                return Math.abs((x2 + x1) / 2) - getWidth() / 2;
         }
 
         public float getTop()
         {
-            // after rotation top left will be center of line so find the midpoint and correct for the line to border transform
-            return Math.abs((y2 + y1) / 2) - (getLineStrokeWidth() + getHeight()) / 2;
+            if (horizontal || vertical)
+                return Math.min(y1, y2);
+            else
+                // after rotation top left will be center of line so find the midpoint and correct for the line to border transform
+                return Math.abs((y2 + y1) / 2) - (getLineStrokeWidth() + getHeight()) / 2;
         }
 
         public double getAngleDegrees()
         {
-            return Math.toDegrees(Math.atan((y2 - y1) / (x2 - x1)));
+            if (horizontal || vertical)
+                return 0;
+            else
+                return Math.toDegrees(Math.atan((y2 - y1) / (x2 - x1)));
         }
 
         public float getLineStrokeWidth()
@@ -459,6 +483,11 @@ public class PDFDomTree extends PDFBoxTree
             return lineWidth;
         }
 
+        public String getBorderSide()
+        {
+            return vertical ? "border-right" : "border-bottom";
+        }
+        
         private float distanceFormula(float x1, float y1, float x2, float y2)
         {
             return (float) Math.sqrt((x1 - x2) * (x1 - x2) + (y1 - y2) * (y1 - y2));

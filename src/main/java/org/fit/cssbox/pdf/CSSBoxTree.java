@@ -494,7 +494,7 @@ public class CSSBoxTree extends PDFDomTree
     protected NodeData createLineStyle(float x1, float y1, float x2, float y2)
     {
         HtmlDivLine line = new HtmlDivLine(x1, y1, x2, y2);
-        String bside = "border-bottom";
+        String bside = line.getBorderSide();
 
         NodeData ret = CSSFactory.createNodeData();
         TermFactory tf = CSSFactory.getTermFactory();
@@ -509,9 +509,12 @@ public class CSSBoxTree extends PDFDomTree
         String color = colorString(getGraphicsState().getStrokingColor());
         ret.push(createDeclaration(bside + "-color", tf.createColor(color)));
 
-        TermFunction rotate = tf.createFunction();
-        rotate.setFunctionName("rotate").add(tf.createAngle(String.valueOf(line.getAngleDegrees()), Unit.deg, 1));
-        ret.push(createDeclaration("transform", rotate));
+        if (line.getAngleDegrees() != 0)
+        {
+            TermFunction rotate = tf.createFunction();
+            rotate.setFunctionName("rotate").add(tf.createAngle(String.valueOf(line.getAngleDegrees()), Unit.deg, 1));
+            ret.push(createDeclaration("transform", rotate));
+        }
 
         return ret;
     }
