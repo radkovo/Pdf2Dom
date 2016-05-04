@@ -19,8 +19,10 @@
  */
 package org.fit.pdfdom;
 
+import java.awt.*;
 import java.awt.geom.AffineTransform;
-import java.awt.geom.NoninvertibleTransformException;
+import java.awt.geom.Point2D;
+import java.awt.geom.Rectangle2D;
 import java.awt.image.BufferedImage;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -413,9 +415,9 @@ public abstract class PDFBoxTree extends PDFTextStripper
                 	float width = getLength(arguments.get(2));
                 	float height = getLength(arguments.get(3));
 
-                	float[] p1 = transformPosition(x, y);
-                	float[] p2 = transformPosition(x + width, y + height);
-                	
+                    float[] p1 = transformPosition(x, y);
+                    float[] p2 = transformPosition(x + width, y + height);
+
                 	graphicsPath.add(new PathSegment(p1[0], p1[1], p2[0], p1[1]));
                     graphicsPath.add(new PathSegment(p2[0], p1[1], p2[0], p2[1]));
                     graphicsPath.add(new PathSegment(p2[0], p2[1], p1[0], p2[1]));
@@ -467,55 +469,44 @@ public abstract class PDFBoxTree extends PDFTextStripper
         else if (operation.equals("Do"))
         {
             if (!disableImages)
-            {
-                COSName objectName = (COSName)arguments.get( 0 );
-                PDXObject xobject = getResources().getXObject( objectName );
-                if (xobject instanceof PDImageXObject)
-                {
-                    PDImageXObject image = (PDImageXObject) xobject;
-                    byte[] data = getImageData(image);
-                    
-                    Matrix ctm = getGraphicsState().getCurrentTransformationMatrix();
-                    ctm = ctm.multiply(createUnrotationMatrix());
-                    float x = ctm.getTranslateX();
-                    float y = ctm.getTranslateY();
-                    float width = ctm.getScalingFactorX();
-                    float height = ctm.getScalingFactorY();
-                    if (width < 0)
-                    {
-                        width = -width;
-                        x -= width;
-                    }
-                    if (height < 0)
-                    {
-                        height = -height;
-                        y -= height;
-                    }
-                    
-                    PDRectangle cb = pdpage.getCropBox();
-                    switch (pdpage.getRotation())
-                    {
-                        case 0:
-                            y = cb.getHeight() - y;
-                            break;
-                        case 90:
-                            y = -y;
-                            break;
-                        case 180:
-                            x = -x;
-                            break;
-                        case 270:
-                            x = -x; y = -y;
-                            break;
-                    }
-
-                    renderImage(x, y - height, width, height, "image/png", data);
-                }
-            }
+                processImageOperation(arguments);
         }
         
         super.processOperator(operator, arguments);
-    }   
+    }
+
+    protected void processImageOperation(List<COSBase> arguments) throws IOException
+    {
+        COSName objectName = (COSName)arguments.get( 0 );
+        PDXObject xobject = getResources().getXObject( objectName );
+        if (xobject instanceof PDImageXObject)
+        {
+            PDImageXObject pdfImage = (PDImageXObject) xobject;
+            BufferedImage outputImage = pdfImage.getImage();
+
+            // x, y and size are handled by css attributes but still need to rotate the image so pulling
+            // only rotation out of the matrix so no giant whitespace offset from translations
+            Matrix ctm = getGraphicsState().getCurrentTransformationMatrix();
+            AffineTransform tr = ctm.createAffineTransform();
+            double rotate = Math.atan2(tr.getShearY(), tr.getScaleY()) - Math.toRadians(pdpage.getRotation());
+            outputImage = ImageUtils.rotateImage(outputImage, rotate);
+            byte[] imageData = getImageData(outputImage);
+
+            Rectangle2D imageBounds = pdfImage.getImage().getRaster().getBounds();
+            AffineTransform pageTransform = createCurrentPageTransformation();
+            AffineTransform imageTransform = new AffineTransform(ctm.createAffineTransform());
+            imageTransform.scale(1.0 / pdfImage.getWidth(), -1.0 / pdfImage.getHeight());
+            imageTransform.translate(0, -pdfImage.getHeight());
+            pageTransform.concatenate(imageTransform);
+            Rectangle2D bounds =
+                    pageTransform.createTransformedShape(imageBounds).getBounds2D();
+
+            float x = (float) bounds.getX();
+            float y = (float) bounds.getY();
+
+            renderImage(x, y, (float) bounds.getWidth(), (float) bounds.getHeight(), "image/png", imageData);
+        }
+    }
 
     @Override
     protected void processTextPosition(TextPosition text)
@@ -711,86 +702,64 @@ public abstract class PDFBoxTree extends PDFTextStripper
      */
     protected PDRectangle getCurrentMediaBox()
     {
-        PDRectangle layout = pdpage.getMediaBox();
+        PDRectangle layout = pdpage.getCropBox();
         return layout;
     }
-    
-    /**
-     * Creates an unrotation matrix from the givent transformation matrix.
-     * @param ctm the transformation matrix
-     * @return the unrotation matrix or {@code null} when something fails.
-     */
-    protected Matrix createUnrotationMatrix()
-    {
-        try
-        {
-            double rotationInRadians = (pdpage.getRotation() * Math.PI) / 180;
 
-            AffineTransform rotation = new AffineTransform();
-            rotation.setToRotation(rotationInRadians);
-            AffineTransform rotationInverse = rotation.createInverse();
-            Matrix rotationInverseMatrix = new Matrix(rotationInverse);
-            return rotationInverseMatrix;
-            
-        } catch (NoninvertibleTransformException e) {
-            e.printStackTrace();
-            return null;
-        }
-    }
-    
     //===========================================================================================
-    
+
     /**
      * Transforms a length according to the current transformation matrix.
      */
     protected float transformLength(float w)
     {
-    	Matrix ctm = getGraphicsState().getCurrentTransformationMatrix();
-    	Matrix m = new Matrix();
-    	m.setValue(2, 0, w);
-    	return m.multiply(ctm).getTranslateX();
+        Matrix ctm = getGraphicsState().getCurrentTransformationMatrix();
+        Matrix m = new Matrix();
+        m.setValue(2, 0, w);
+        return m.multiply(ctm).getTranslateX();
     }
-    
+
     /**
-     * Transforms a position according to the current transformation matrix.
+     * Transforms a position according to the current transformation matrix and current page transformation.
      * @param x
      * @param y
      * @return
      */
     protected float[] transformPosition(float x, float y)
     {
-        Matrix spos = new Matrix();
-        spos.setValue(2, 0, x);
-        spos.setValue(2, 1, y);
-        
-        Matrix ctm = getGraphicsState().getCurrentTransformationMatrix();
-        Matrix sposXctm = spos.multiply(ctm); 
-        Matrix ret = sposXctm.multiply(createUnrotationMatrix());
-        
-        float rx = ret.getTranslateX();
-        float ry = ret.getTranslateY();
+        Point2D.Float point = super.transformedPoint(x, y);
+        AffineTransform pageTransform = createCurrentPageTransformation();
+        Point2D.Float transformedPoint = (Point2D.Float) pageTransform.transform(point, null);
+
+        return new float[]{(float) transformedPoint.getX(), (float) transformedPoint.getY()};
+    }
+
+    protected AffineTransform createCurrentPageTransformation()
+    {
         PDRectangle cb = pdpage.getCropBox();
+        AffineTransform pageTransform = new AffineTransform();
+
         switch (pdpage.getRotation())
         {
-            case 0:
-                ry = cb.getHeight() - ry;
-                break;
             case 90:
-                ry = -ry;
+                pageTransform.translate(cb.getHeight(), 0);
                 break;
             case 180:
-                rx = -rx;
+                pageTransform.translate(cb.getWidth(), cb.getHeight());
                 break;
             case 270:
-                rx = -rx; ry = -ry;
+                pageTransform.translate(0, cb.getWidth());
                 break;
         }
-        
-        //return new float[]{sposXctm.getXPosition(), sposXctm.getYPosition()};
-        return new float[]{rx, ry};
-        //return new float[]{x, y};
+
+        pageTransform.rotate(Math.toRadians(pdpage.getRotation()));
+        pageTransform.translate(0, cb.getHeight());
+        pageTransform.scale(1, -1);
+        pageTransform.translate(-cb.getLowerLeftX(), -cb.getLowerLeftY());
+
+        return pageTransform;
     }
-    
+
     /**
      * Obtains a number from a PDF number value
      * @param value the PDF value of the Integer or Fload type
@@ -890,11 +859,11 @@ public abstract class PDFBoxTree extends PDFTextStripper
      * @return the resulting image data
      * @throws IOException
      */
-    protected byte[] getImageData(PDImageXObject image) throws IOException
+    protected byte[] getImageData(BufferedImage image) throws IOException
     {
-        BufferedImage img = image.getImage();
         ByteArrayOutputStream buffer = new ByteArrayOutputStream();
-        ImageIO.write(img, "PNG", buffer);
+        ImageIO.write(image, "PNG", buffer);
+
         return buffer.toByteArray();
     }
 

@@ -1,33 +1,26 @@
-import org.apache.commons.io.FileUtils;
-import org.apache.pdfbox.pdmodel.PDDocument;
-import org.fit.pdfdom.BoxStyle;
-import org.fit.pdfdom.PDFDomTree;
-import org.jsoup.Jsoup;
+package org.fit.pdfdom;
+
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.junit.Assert;
 import org.junit.Test;
 
-import javax.xml.parsers.ParserConfigurationException;
-import javax.xml.transform.TransformerException;
 import java.io.File;
-import java.io.IOException;
-import java.io.StringWriter;
-import java.io.Writer;
 
+import static org.fit.pdfdom.TestUtils.baseFilesPath;
 import static org.hamcrest.CoreMatchers.containsString;
 import static org.hamcrest.core.IsNot.not;
 
 public class TestPDFDomTree
 {
-    private static final String testPath = "src/test/files/";
+    private static final String testPath = baseFilesPath;
 
     @Test
     public void neitherRenderingModeText_outputTextIsInvisible() throws Exception
     {
         File testPdf = new File(testPath + "text-rendering-mode-neither.pdf");
 
-        Document html = convertToHtml(testPdf);
+        Document html = TestUtils.parseWithPdfDomTree(testPdf);
         Element text = html.select("div[class=p]").first();
 
         Assert.assertThat("Text element should be invisible.",
@@ -40,7 +33,7 @@ public class TestPDFDomTree
         String expectedTextFillColor = "color:#8000fe;";
         File testPdf = new File(testPath + "text-rendering-mode-fill.pdf");
 
-        Document html = convertToHtml(testPdf);
+        Document html = TestUtils.parseWithPdfDomTree(testPdf);
         Element text = html.select("div[class=p]").first();
 
         Assert.assertThat(text.attr("style"), containsString(expectedTextFillColor));
@@ -52,7 +45,7 @@ public class TestPDFDomTree
     {
         File testPdf = new File(testPath + "text-rendering-mode-stroke.pdf");
 
-        Document html = convertToHtml(testPdf);
+        Document html = TestUtils.parseWithPdfDomTree(testPdf);
         Element text = html.select("div[class=p]").first();
 
         Assert.assertThat("Text element should not have fill color.",
@@ -67,7 +60,7 @@ public class TestPDFDomTree
     {
         File testPdf = new File(testPath + "text-rendering-mode-stroke-and-fill.pdf");
 
-        Document html = convertToHtml(testPdf);
+        Document html = TestUtils.parseWithPdfDomTree(testPdf);
         Element text = html.select("div[class=p]").first();
 
         Assert.assertThat("Text element is missing fill color.",
@@ -77,19 +70,4 @@ public class TestPDFDomTree
                 text.attr("style"), containsString("webkit-text-stroke: #ff00ff"));
     }
 
-    public static Document convertToHtml(File file)
-            throws IOException, ParserConfigurationException, TransformerException
-    {
-        PDDocument pdf = PDDocument.load(file);
-        PDFDomTree parser = new PDFDomTree();
-
-        Writer output = new StringWriter();
-        parser.writeText(pdf, output);
-        pdf.close();
-        String htmlOutput = output.toString();
-        // File debugOutFile = new File(file.getName().replace(".pdf", ".html"));
-        // FileUtils.write(debugOutFile, htmlOutput);
-
-        return Jsoup.parse(htmlOutput);
-    }
 }
