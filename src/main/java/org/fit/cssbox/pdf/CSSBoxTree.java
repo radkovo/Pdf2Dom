@@ -33,6 +33,7 @@ import cz.vutbr.web.css.Declaration;
 import cz.vutbr.web.css.NodeData;
 import cz.vutbr.web.css.Term;
 import cz.vutbr.web.css.TermFactory;
+import cz.vutbr.web.css.TermFunction;
 import cz.vutbr.web.css.TermColor;
 import cz.vutbr.web.css.TermNumeric.Unit;
 
@@ -222,20 +223,13 @@ public class CSSBoxTree extends PDFDomTree
         {
             for (PathSegment segm : path)
             {
-                float difx = Math.abs(segm.getX1() - segm.getX2());
-                float dify = Math.abs(segm.getY1() - segm.getY2());
-                if (difx < 0.5f || dify < 0.5f)
-                {
-                    //DOM element
-                    Element el = createLineElement(segm.getX1(), segm.getY1(), segm.getX2(), segm.getY2());
-                    curpage.appendChild(el);
-                    //Block box
-                    BlockBox block = createBlock(pagebox, el, false);
-                    block.setStyle(createLineStyle(segm.getX1(), segm.getY1(), segm.getX2(), segm.getY2()));
-                    pagebox.addSubBox(block);
-                }
-                else
-                    log.warn("Skipped non-orthogonal line segment");
+                //DOM element
+                Element el = createLineElement(segm.getX1(), segm.getY1(), segm.getX2(), segm.getY2());
+                curpage.appendChild(el);
+                //Block box
+                BlockBox block = createBlock(pagebox, el, false);
+                block.setStyle(createLineStyle(segm.getX1(), segm.getY1(), segm.getX2(), segm.getY2()));
+                pagebox.addSubBox(block);
             }
         }
     }
@@ -499,39 +493,25 @@ public class CSSBoxTree extends PDFDomTree
     
     protected NodeData createLineStyle(float x1, float y1, float x2, float y2)
     {
-        float x = Math.min(x1, x2);
-        float y = Math.min(y1, y2);
-        float width = Math.abs(x2 - x1);
-        float height = Math.abs(y2 - y1);
+        HtmlDivLine line = new HtmlDivLine(x1, y1, x2, y2);
+        String bside = "border-bottom";
 
-        String bside;
-        float lineWidth = transformLength((float) getGraphicsState().getLineWidth());
-        float lw = (lineWidth < 1f) ? 1f : lineWidth;
-        
-        if (width < height)
-        {
-            y += lw / 2;
-            height -= lw;
-            bside = "border-left";
-        }
-        else
-        {
-            x += lw / 2;
-            width -= lw;
-            bside = "border-top";
-        }
-        
         NodeData ret = CSSFactory.createNodeData();
         TermFactory tf = CSSFactory.getTermFactory();
         ret.push(createDeclaration("position", tf.createIdent("absolute")));
-        ret.push(createDeclaration("left", tf.createLength(x, unit)));
-        ret.push(createDeclaration("top", tf.createLength(y, unit)));
-        ret.push(createDeclaration("width", tf.createLength(width, unit)));
-        ret.push(createDeclaration("height", tf.createLength(height, unit)));
-        ret.push(createDeclaration(bside + "-width", tf.createLength(lw, unit)));
+        ret.push(createDeclaration("position", tf.createIdent("absolute")));
+        ret.push(createDeclaration("left", tf.createLength(line.getLeft(), unit)));
+        ret.push(createDeclaration("top", tf.createLength(line.getTop(), unit)));
+        ret.push(createDeclaration("width", tf.createLength(line.getWidth(), unit)));
+        ret.push(createDeclaration("height", tf.createLength((float) line.getHeight(), unit)));
+        ret.push(createDeclaration(bside + "-width", tf.createLength(line.getLineStrokeWidth(), unit)));
         ret.push(createDeclaration(bside + "-style", tf.createIdent("solid")));
         String color = colorString(getGraphicsState().getStrokingColor());
         ret.push(createDeclaration(bside + "-color", tf.createColor(color)));
+
+        TermFunction rotate = tf.createFunction();
+        rotate.setFunctionName("rotate").add(tf.createAngle(String.valueOf(line.getAngleDegrees()), Unit.deg, 1));
+        ret.push(createDeclaration("transform", rotate));
 
         return ret;
     }
