@@ -30,7 +30,7 @@ public class TestPDFDomTree
     @Test
     public void fillRenderingModeText_outputIsFilledWithNoOutline() throws Exception
     {
-        String expectedTextFillColor = "color:#8000fe;";
+        String expectedTextFillColor = "color:#8000ff;";
         File testPdf = new File(testPath + "text-rendering-mode-fill.pdf");
 
         Document html = TestUtils.parseWithPdfDomTree(testPdf);
