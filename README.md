@@ -1,6 +1,8 @@
-
 Pdf2Dom
 ========
+
+[![Build Status](https://travis-ci.org/radkovo/Pdf2Dom.png)](https://travis-ci.org/radkovo/Pdf2Dom)
+
 Pdf2Dom is a PDF parser that converts the documents to a HTML DOM representation. The obtained DOM tree may be then
 serialized to a HTML file or further processed. The inline CSS definitions contained in the resulting document are
 used for making the HTML page as similar as possible to the PDF input. A command-line utility for converting the PDF
