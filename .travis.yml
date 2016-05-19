@@ -1,3 +1,4 @@
 language: java
 sudo: false
+install: ./misc/install_dependencies.sh
 script: "mvn test"
