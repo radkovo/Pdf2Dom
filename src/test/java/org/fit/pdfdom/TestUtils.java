@@ -1,36 +1,36 @@
 package org.fit.pdfdom;
 
-import org.apache.commons.io.FileUtils;
 import org.apache.pdfbox.pdmodel.PDDocument;
-import org.apache.pdfbox.rendering.PDFRenderer;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.junit.Assert;
 
-import javax.imageio.ImageIO;
 import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.transform.TransformerException;
 import java.awt.geom.Rectangle2D;
-import java.awt.image.BufferedImage;
-import java.io.*;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.StringWriter;
+import java.io.Writer;
 
 import static org.hamcrest.Matchers.greaterThan;
 import static org.hamcrest.number.OrderingComparison.lessThan;
 
 public class TestUtils
 {
-    public static final String baseFilesPath = "src/test/files/";
-
-    public static Document parseWithPdfDomTree(String filePath)
+    public static Document parseWithPdfDomTree(String resource)
             throws IOException, ParserConfigurationException, TransformerException
     {
-        return parseWithPdfDomTree(new File(filePath));
+        InputStream is = TestUtils.class.getResourceAsStream(resource);
+        Document doc = parseWithPdfDomTree(is);
+        is.close();
+        return doc;
     }
 
-    public static Document parseWithPdfDomTree(File file)
+    public static Document parseWithPdfDomTree(InputStream is)
             throws IOException, ParserConfigurationException, TransformerException
     {
-        PDDocument pdf = PDDocument.load(file);
+        PDDocument pdf = PDDocument.load(is);
         PDFDomTree parser = new PDFDomTree();
 
         Writer output = new StringWriter();

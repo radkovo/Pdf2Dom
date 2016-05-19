@@ -5,22 +5,17 @@ import org.jsoup.nodes.Element;
 import org.junit.Assert;
 import org.junit.Test;
 
-import java.io.File;
-
-import static org.fit.pdfdom.TestUtils.baseFilesPath;
 import static org.hamcrest.CoreMatchers.containsString;
 import static org.hamcrest.core.IsNot.not;
 
 public class TestPDFDomTree
 {
-    private static final String testPath = baseFilesPath;
+    private static final String testPath = "/";
 
     @Test
     public void neitherRenderingModeText_outputTextIsInvisible() throws Exception
     {
-        File testPdf = new File(testPath + "text-rendering-mode-neither.pdf");
-
-        Document html = TestUtils.parseWithPdfDomTree(testPdf);
+        Document html = TestUtils.parseWithPdfDomTree(testPath + "text-rendering-mode-neither.pdf");
         Element text = html.select("div[class=p]").first();
 
         Assert.assertThat("Text element should be invisible.",
@@ -31,9 +26,8 @@ public class TestPDFDomTree
     public void fillRenderingModeText_outputIsFilledWithNoOutline() throws Exception
     {
         String expectedTextFillColor = "color:#8000ff;";
-        File testPdf = new File(testPath + "text-rendering-mode-fill.pdf");
 
-        Document html = TestUtils.parseWithPdfDomTree(testPdf);
+        Document html = TestUtils.parseWithPdfDomTree(testPath + "text-rendering-mode-fill.pdf");
         Element text = html.select("div[class=p]").first();
 
         Assert.assertThat(text.attr("style"), containsString(expectedTextFillColor));
@@ -43,9 +37,7 @@ public class TestPDFDomTree
     @Test
     public void strokeRenderingModeText_outputTextIsOutlinedAndNotFilled() throws Exception
     {
-        File testPdf = new File(testPath + "text-rendering-mode-stroke.pdf");
-
-        Document html = TestUtils.parseWithPdfDomTree(testPdf);
+        Document html = TestUtils.parseWithPdfDomTree(testPath + "text-rendering-mode-stroke.pdf");
         Element text = html.select("div[class=p]").first();
 
         Assert.assertThat("Text element should not have fill color.",
@@ -58,9 +50,7 @@ public class TestPDFDomTree
     @Test
     public void strokeAndFillRenderingModeText() throws Exception
     {
-        File testPdf = new File(testPath + "text-rendering-mode-stroke-and-fill.pdf");
-
-        Document html = TestUtils.parseWithPdfDomTree(testPdf);
+        Document html = TestUtils.parseWithPdfDomTree(testPath + "text-rendering-mode-stroke-and-fill.pdf");
         Element text = html.select("div[class=p]").first();
 
         Assert.assertThat("Text element is missing fill color.",

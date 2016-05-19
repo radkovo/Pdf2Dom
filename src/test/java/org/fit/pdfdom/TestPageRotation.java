@@ -7,11 +7,10 @@ import org.junit.Test;
 import java.awt.geom.Rectangle2D;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-import static org.fit.pdfdom.TestUtils.baseFilesPath;
 
 public class TestPageRotation
 {
-    private static final String testPath = baseFilesPath + "/page-rotation/";
+    private static final String testPath = "/page-rotation/";
 
     @Test
     public void rotated_270Degrees_withTopLeftImage_GivesImageTranslatedToBottomLeft() throws Exception
