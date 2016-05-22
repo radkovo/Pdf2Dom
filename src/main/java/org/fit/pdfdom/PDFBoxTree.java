@@ -59,8 +59,16 @@ import org.apache.pdfbox.cos.COSName;
 import org.apache.pdfbox.cos.COSNumber;
 import org.apache.pdfbox.cos.COSString;
 import org.apache.pdfbox.pdmodel.PDPage;
+import org.apache.pdfbox.pdmodel.PDResources;
 import org.apache.pdfbox.pdmodel.common.PDRectangle;
+import org.apache.pdfbox.pdmodel.font.PDCIDFont;
+import org.apache.pdfbox.pdmodel.font.PDCIDFontType2;
+import org.apache.pdfbox.pdmodel.font.PDFont;
+import org.apache.pdfbox.pdmodel.font.PDFontDescriptor;
+import org.apache.pdfbox.pdmodel.font.PDTrueTypeFont;
+import org.apache.pdfbox.pdmodel.font.PDType0Font;
 import org.apache.pdfbox.pdmodel.graphics.PDXObject;
+import org.apache.pdfbox.pdmodel.graphics.form.PDFormXObject;
 import org.apache.pdfbox.pdmodel.graphics.color.PDColor;
 import org.apache.pdfbox.pdmodel.graphics.image.PDImageXObject;
 import org.apache.pdfbox.pdmodel.graphics.state.RenderingMode;
@@ -86,8 +94,6 @@ public abstract class PDFBoxTree extends PDFTextStripper
     /** Length units used in the generated CSS */
     public static final String UNIT = "pt";
 	
-    /** Known font names that are recognized in the PDF files */
-    protected static String[] cssFontFamily = { "Times New Roman", "Times", "Garamond", "Helvetica", "Arial", "Arial Narrow", "Verdana", "Courier New", "MS Sans Serif" };
     /** Known font subtypes recognized in PDF files */
     protected static String[] pdFontType =    { "normal", "roman",  "bold",   "italic", "bolditalic" };
     /** Font weights corresponding to the font subtypes in {@link PDFDomTree#pdFontType} */
@@ -105,6 +111,9 @@ public abstract class PDFBoxTree extends PDFTextStripper
     protected int startPage;
     /** Last page to be processed */
     protected int endPage;
+    
+    /** Table of embedded fonts */
+    protected FontTable fontTable;
     
     /** The PDF page currently being processed */
     protected PDPage pdpage;
@@ -189,12 +198,14 @@ public abstract class PDFBoxTree extends PDFTextStripper
         graphicsPath = new Vector<PathSegment>();
         startPage = 0;
         endPage = Integer.MAX_VALUE;
+        fontTable = new FontTable();
     }
     
     
     public void processPage(PDPage page) throws IOException
     {
         pdpage = page;
+        updateFontTable();
         startNewPage();
         super.processPage(page);
         finishBox();
@@ -336,6 +347,63 @@ public abstract class PDFBoxTree extends PDFTextStripper
         }
         else
             return null; //four segments required
+    }
+    
+    /**
+     * Updates the font table by adding new fonts used at the current page.
+     */
+    protected void updateFontTable()
+    {
+        PDResources resources = pdpage.getResources();
+        if (resources != null)
+        {
+            try
+            {
+                processFontResources(resources, fontTable);
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+    }
+    
+    private void processFontResources(PDResources resources, FontTable table) throws IOException
+    {
+        for (COSName key : resources.getFontNames())
+        {
+            PDFont font = resources.getFont(key);
+            if (font instanceof PDTrueTypeFont)
+            {
+                table.addEntry(font.getName(), font.getFontDescriptor());
+                PDFontDescriptor dd = font.getFontDescriptor();
+                System.out.println("Font: " + font.getName() + " TTF");
+            }
+            else if (font instanceof PDType0Font)
+            {
+                PDCIDFont descendantFont = ((PDType0Font) font).getDescendantFont();
+                if (descendantFont instanceof PDCIDFontType2)
+                {
+                    table.addEntry(font.getName(), descendantFont.getFontDescriptor());
+                    System.out.println("Font: " + font.getName() + " TTF2");
+                }
+                else
+                    System.out.println("Font: " + font.getName() + " skipped1");
+            }
+            else
+                System.out.println("Font: " + font.getName() + " skipped2");
+        }
+
+        for (COSName name : resources.getXObjectNames())
+        {
+            PDXObject xobject = resources.getXObject(name);
+            if (xobject instanceof PDFormXObject)
+            {
+                PDFormXObject xObjectForm = (PDFormXObject) xobject;
+                PDResources formResources = xObjectForm.getResources();
+                if (formResources != null)
+                    processFontResources(formResources, table);
+            }
+        }
+
     }
     
     //===========================================================================================
@@ -653,14 +721,9 @@ public abstract class PDFBoxTree extends PDFTextStripper
             	bstyle.setFontStyle(cssFontStyle[0]);
             
             //font family
-            for (int i = 0; i < cssFontFamily.length; i++)
-            { 
-                if (font.toLowerCase().lastIndexOf(cssFontFamily[i].toLowerCase()) >= 0)
-                {
-                    family = cssFontFamily[i];
-                    break;
-                }
-            }
+            family = fontTable.getUsedName(font);
+            if (family == null)
+                family = font;
             if (family != null)
             	bstyle.setFontFamily(family);
         }
