@@ -1,5 +1,6 @@
 package org.fit.pdfdom;
 
+import org.apache.commons.io.FileUtils;
 import org.apache.pdfbox.pdmodel.PDDocument;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
@@ -8,10 +9,7 @@ import org.junit.Assert;
 import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.transform.TransformerException;
 import java.awt.geom.Rectangle2D;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.StringWriter;
-import java.io.Writer;
+import java.io.*;
 
 import static org.hamcrest.Matchers.greaterThan;
 import static org.hamcrest.number.OrderingComparison.lessThan;
@@ -24,6 +22,9 @@ public class TestUtils
         InputStream is = TestUtils.class.getResourceAsStream(resource);
         Document doc = parseWithPdfDomTree(is);
         is.close();
+//        File debugOutFile = new File(resource.replace(".pdf", ".html").replaceAll(".*/",""));
+//        FileUtils.write(debugOutFile, doc.outerHtml());
+
         return doc;
     }
 
@@ -37,8 +38,6 @@ public class TestUtils
         parser.writeText(pdf, output);
         pdf.close();
         String htmlOutput = output.toString();
-//        File debugOutFile = new File(file.getName().replace(".pdf", ".html"));
-//        FileUtils.write(debugOutFile, htmlOutput);
 
         return Jsoup.parse(htmlOutput);
     }

@@ -61,12 +61,7 @@ import org.apache.pdfbox.cos.COSString;
 import org.apache.pdfbox.pdmodel.PDPage;
 import org.apache.pdfbox.pdmodel.PDResources;
 import org.apache.pdfbox.pdmodel.common.PDRectangle;
-import org.apache.pdfbox.pdmodel.font.PDCIDFont;
-import org.apache.pdfbox.pdmodel.font.PDCIDFontType2;
-import org.apache.pdfbox.pdmodel.font.PDFont;
-import org.apache.pdfbox.pdmodel.font.PDFontDescriptor;
-import org.apache.pdfbox.pdmodel.font.PDTrueTypeFont;
-import org.apache.pdfbox.pdmodel.font.PDType0Font;
+import org.apache.pdfbox.pdmodel.font.*;
 import org.apache.pdfbox.pdmodel.graphics.PDXObject;
 import org.apache.pdfbox.pdmodel.graphics.form.PDFormXObject;
 import org.apache.pdfbox.pdmodel.graphics.color.PDColor;
@@ -388,6 +383,8 @@ public abstract class PDFBoxTree extends PDFTextStripper
                 else
                     System.out.println("Font: " + font.getName() + " skipped1");
             }
+            else if (font instanceof PDType1CFont)
+                table.addEntry(font.getName(), ((PDType1CFont) font).getFontDescriptor());
             else
                 System.out.println("Font: " + font.getName() + " skipped2");
         }

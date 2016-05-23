@@ -143,6 +143,11 @@
 			<version>2.0.0</version>
 		</dependency>
 		<dependency>
+			<groupId>org.fontverter</groupId>
+			<artifactId>FontVerter</artifactId>
+			<version>1.0</version>
+		</dependency>
+		<dependency>
 			<groupId>junit</groupId>
 			<artifactId>junit</artifactId>
 			<version>4.11</version>
@@ -176,6 +181,12 @@
 			<snapshots>
 				<enabled>true</enabled>
 			</snapshots>
+		</repository>
+
+		<repository>
+			<id>bintray-m-abboud-fontverter</id>
+			<name>bintray</name>
+			<url>https://dl.bintray.com/m-abboud/maven/</url>
 		</repository>
 	</repositories>
 
