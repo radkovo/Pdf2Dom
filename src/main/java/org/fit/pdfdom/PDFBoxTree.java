@@ -363,30 +363,31 @@ public abstract class PDFBoxTree extends PDFTextStripper
     
     private void processFontResources(PDResources resources, FontTable table) throws IOException
     {
+        String fontNotSupportedMessage = "Font: {} skipped because type '{}' is not supported.";
+
         for (COSName key : resources.getFontNames())
         {
             PDFont font = resources.getFont(key);
             if (font instanceof PDTrueTypeFont)
             {
                 table.addEntry(font.getName(), font.getFontDescriptor());
-                PDFontDescriptor dd = font.getFontDescriptor();
-                System.out.println("Font: " + font.getName() + " TTF");
+                log.debug("Font: " + font.getName() + " TTF");
             }
-            else if (font instanceof PDType0Font)
-            {
-                PDCIDFont descendantFont = ((PDType0Font) font).getDescendantFont();
-                if (descendantFont instanceof PDCIDFontType2)
-                {
-                    table.addEntry(font.getName(), descendantFont.getFontDescriptor());
-                    System.out.println("Font: " + font.getName() + " TTF2");
-                }
-                else
-                    System.out.println("Font: " + font.getName() + " skipped1");
-            }
-            else if (font instanceof PDType1CFont)
-                table.addEntry(font.getName(), ((PDType1CFont) font).getFontDescriptor());
             else
-                System.out.println("Font: " + font.getName() + " skipped2");
+            {
+                if (font instanceof PDType0Font)
+                {
+                    PDCIDFont descendantFont = ((PDType0Font) font).getDescendantFont();
+                    if (descendantFont instanceof PDCIDFontType2)
+                        table.addEntry(font.getName(), descendantFont.getFontDescriptor());
+                    else
+                        log.warn(fontNotSupportedMessage, font.getName(), font.getClass().getSimpleName());
+                }
+                else if (font instanceof PDType1CFont)
+                    table.addEntry(font.getName(), font.getFontDescriptor());
+                else
+                    log.warn(fontNotSupportedMessage, font.getName(), font.getClass().getSimpleName());
+            }
         }
 
         for (COSName name : resources.getXObjectNames())

@@ -8,8 +8,10 @@ import java.util.HashMap;
 
 import org.apache.pdfbox.pdmodel.common.PDStream;
 import org.apache.pdfbox.pdmodel.font.PDFontDescriptor;
-import org.fontverter.FontAdapter;
-import org.fontverter.FontVerter;
+import org.mabb.fontverter.FVFont;
+import org.mabb.fontverter.FontVerter;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * A table for storing entries about the embedded fonts and their usage.
@@ -18,6 +20,7 @@ import org.fontverter.FontVerter;
  */
 public class FontTable extends HashMap<String, FontTable.Entry>
 {
+    Logger log = LoggerFactory.getLogger(FontTable.class);
     private static final long serialVersionUID = 1L;
     private static int nextNameIndex = 1;
 
@@ -63,7 +66,10 @@ public class FontTable extends HashMap<String, FontTable.Entry>
 
         public String getDataURL() throws IOException
         {
-            final char[] cdata = Base64Coder.encode(getFontData());
+            char[] cdata = new char[0];
+            if (getFontData() != null)
+                cdata = Base64Coder.encode(getFontData());
+
             return String.format("data:application/%s;base64,%s", mimeType, new String(cdata));
         }
 
@@ -85,23 +91,35 @@ public class FontTable extends HashMap<String, FontTable.Entry>
 
         private byte[] loadTrueTypeFont(PDStream fontFile) throws IOException
         {
-            // true type can be used as is by browsers, could convert to WOFF though for optimal output.
+            // otf/OpenType/ttf/TrueType can be used as is by browsers, could convert to WOFF though for
+            // optimal html output.
             mimeType = "x-font-truetype";
             return fontFile.toByteArray();
         }
 
         private byte[] loadType1Font(PDStream fontFile) throws IOException
         {
-            throw new IOException("Type 1 font's are not supported by Pdf2Dom");
+            log.warn("Type 1 fonts are not supported by Pdf2Dom.");
+            return new byte[0];
         }
 
         private byte[] loadOtherTypeFont(PDStream fontFile) throws IOException
         {
-            // Likley Bare CFF which needs to be converted to a font supported by browsers, but possibly other font types
-            FontAdapter font = FontVerter.convertFont(fontFile.toByteArray(), FontVerter.FontFormat.WOFF1);
-            mimeType = "x-font-woff";
+            // Likley Bare CFF which needs to be converted to a font supported by browsers, can be
+            // other font types which are not yet supported.
+            try
+            {
+                FVFont font = FontVerter.convertFont(fontFile.toByteArray(), FontVerter.FontFormat.WOFF1);
+                mimeType = "x-font-woff";
 
-            return font.getData();
+                return font.getData();
+            } catch (Exception ex) {
+                log.warn("Issue converting Bare CFF font or the font type is not supportedby Pdf2Dom, " +
+                        "Font: {} Exception: {} {}", fontName, ex.getMessage(), ex.getClass());
+
+                // don't barf completley for font conversion issue, html will still be useable without.
+                return new byte[0];
+            }
         }
 
         @Override
