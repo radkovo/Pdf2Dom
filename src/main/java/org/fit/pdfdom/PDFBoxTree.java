@@ -88,7 +88,10 @@ public abstract class PDFBoxTree extends PDFTextStripper
     
     /** Length units used in the generated CSS */
     public static final String UNIT = "pt";
-	
+
+    /** Known font names that are recognized in the PDF files */
+    protected static String[] cssFontFamily = { "Times New Roman", "Times", "Garamond", "Helvetica", "Arial", "Arial Narrow", "Verdana", "Courier New", "MS Sans Serif" };
+
     /** Known font subtypes recognized in PDF files */
     protected static String[] pdFontType =    { "normal", "roman",  "bold",   "italic", "bolditalic" };
     /** Font weights corresponding to the font subtypes in {@link PDFDomTree#pdFontType} */
@@ -373,21 +376,18 @@ public abstract class PDFBoxTree extends PDFTextStripper
                 table.addEntry(font.getName(), font.getFontDescriptor());
                 log.debug("Font: " + font.getName() + " TTF");
             }
-            else
+            else if (font instanceof PDType0Font)
             {
-                if (font instanceof PDType0Font)
-                {
-                    PDCIDFont descendantFont = ((PDType0Font) font).getDescendantFont();
-                    if (descendantFont instanceof PDCIDFontType2)
-                        table.addEntry(font.getName(), descendantFont.getFontDescriptor());
-                    else
-                        log.warn(fontNotSupportedMessage, font.getName(), font.getClass().getSimpleName());
-                }
-                else if (font instanceof PDType1CFont)
-                    table.addEntry(font.getName(), font.getFontDescriptor());
+                PDCIDFont descendantFont = ((PDType0Font) font).getDescendantFont();
+                if (descendantFont instanceof PDCIDFontType2)
+                    table.addEntry(font.getName(), descendantFont.getFontDescriptor());
                 else
                     log.warn(fontNotSupportedMessage, font.getName(), font.getClass().getSimpleName());
             }
+            else if (font instanceof PDType1CFont)
+                table.addEntry(font.getName(), font.getFontDescriptor());
+            else
+                log.warn(fontNotSupportedMessage, font.getName(), font.getClass().getSimpleName());
         }
 
         for (COSName name : resources.getXObjectNames())
@@ -719,14 +719,32 @@ public abstract class PDFBoxTree extends PDFTextStripper
             	bstyle.setFontStyle(cssFontStyle[0]);
             
             //font family
-            family = fontTable.getUsedName(font);
-            if (family == null)
-                family = font;
+            //If it's a known common font don't embed in html output to save space
+            String knownFontFamily = findKnownFontFamily(font);
+            if (!knownFontFamily.equals(""))
+                family = knownFontFamily;
+            else
+            {
+                family = fontTable.getUsedName(font);
+                if (family == null)
+                    family = font;
+            }
+
             if (family != null)
             	bstyle.setFontFamily(family);
         }
 
         updateStyleForRenderingMode();
+    }
+
+    private String findKnownFontFamily(String font) {
+        for (String fontFamilyOn : cssFontFamily)
+        {
+            if (font.toLowerCase().lastIndexOf(fontFamilyOn.toLowerCase()) >= 0)
+                return fontFamilyOn;
+        }
+
+        return "";
     }
 
     private void updateStyleForRenderingMode()

@@ -30,7 +30,10 @@ public class FontTable extends HashMap<String, FontTable.Entry>
         if (entry == null)
         {
             String usedName = nextUsedName();
-            put(fontName, new FontTable.Entry(fontName, usedName, descriptor));
+            FontTable.Entry newEntry = new FontTable.Entry(fontName, usedName, descriptor);
+
+            if(newEntry.isEntryValid())
+                put(fontName, newEntry);
         }
     }
 
@@ -89,6 +92,19 @@ public class FontTable extends HashMap<String, FontTable.Entry>
             return cachedFontData;
         }
 
+        public boolean isEntryValid() {
+            byte[] fontData = new byte[0];
+            try
+            {
+                fontData = getFontData();
+            } catch (IOException e)
+            {
+                log.warn("Error loading font '{}' Message: {} {}", fontName, e.getMessage(), e.getClass());
+            }
+
+            return fontData != null && fontData.length != 0;
+        }
+
         private byte[] loadTrueTypeFont(PDStream fontFile) throws IOException
         {
             // otf/OpenType/ttf/TrueType can be used as is by browsers, could convert to WOFF though for
@@ -114,7 +130,7 @@ public class FontTable extends HashMap<String, FontTable.Entry>
 
                 return font.getData();
             } catch (Exception ex) {
-                log.warn("Issue converting Bare CFF font or the font type is not supportedby Pdf2Dom, " +
+                log.error("Issue converting Bare CFF font or the font type is not supportedby Pdf2Dom, " +
                         "Font: {} Exception: {} {}", fontName, ex.getMessage(), ex.getClass());
 
                 // don't barf completley for font conversion issue, html will still be useable without.
