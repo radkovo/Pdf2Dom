@@ -66,6 +66,8 @@ public class PDFDomTree extends PDFBoxTree
     protected Element body;
     /** The title element of the resulting document. */
     protected Element title;
+    /** The global style element of the resulting document. */
+    protected Element globalStyle;
     /** The element representing the page currently being created in the resulting document. */
     protected Element curpage;
     
@@ -115,10 +117,10 @@ public class PDFDomTree extends PDFBoxTree
         title = doc.createElement("title");
         title.setTextContent("PDF Document");
         head.appendChild(title);
-        Element gs = doc.createElement("style");
-        gs.setAttribute("type", "text/css");
-        gs.setTextContent(defaultStyle);
-        head.appendChild(gs);
+        globalStyle = doc.createElement("style");
+        globalStyle.setAttribute("type", "text/css");
+        //globalStyle.setTextContent(createGlobalStyle());
+        head.appendChild(globalStyle);
         
         body = doc.createElement("body");
         
@@ -154,6 +156,8 @@ public class PDFDomTree extends PDFBoxTree
         String doctitle = document.getDocumentInformation().getTitle();
         if (doctitle != null && doctitle.trim().length() > 0)
             title.setTextContent(doctitle);
+        //set the main style
+        globalStyle.setTextContent(createGlobalStyle());
     }
 
     /**
@@ -493,4 +497,37 @@ public class PDFDomTree extends PDFBoxTree
             return (float) Math.sqrt((x1 - x2) * (x1 - x2) + (y1 - y2) * (y1 - y2));
         }
     }
+    /**
+     * Generate the global CSS style for the whole document.
+     * @return the CSS code used in the generated document header
+     */
+    protected String createGlobalStyle()
+    {
+        StringBuilder ret = new StringBuilder();
+        ret.append(createEmbeddedFonts());
+        ret.append("\n");
+        ret.append(defaultStyle);
+        return ret.toString();
+    }
+    
+    protected String createEmbeddedFonts()
+    {
+        StringBuilder ret = new StringBuilder();
+        for (FontTable.Entry font : fontTable.values())
+        {
+            ret.append("@font-face {");
+            ret.append("font-family:\"").append(font.usedName).append("\";");
+            ret.append("src:url('");
+            try
+            {
+                ret.append(font.getDataURL());
+            } catch (IOException e) {
+            }
+            ret.append("');");
+            ret.append("}\n");
+        }
+        
+        return ret.toString();
+    }
+    
 }
