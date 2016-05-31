@@ -19,6 +19,7 @@
  */
 package org.fit.pdfdom;
 
+import java.io.File;
 import java.io.IOException;
 import java.io.OutputStreamWriter;
 import java.io.Writer;
@@ -28,8 +29,10 @@ import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
 
+import org.apache.commons.io.FileUtils;
 import org.apache.pdfbox.pdmodel.PDDocument;
 import org.apache.pdfbox.pdmodel.common.PDRectangle;
+import org.fit.pdfdom.PDFDomTreeConfig.FontExtractMode;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.w3c.dom.Document;
@@ -49,7 +52,7 @@ import org.w3c.dom.ls.LSSerializer;
 public class PDFDomTree extends PDFBoxTree
 {
     private static Logger log = LoggerFactory.getLogger(PDFDomTree.class);
-    
+
     /** Default style placed in the begining of the resulting document */
     protected String defaultStyle = ".page{position:relative; border:1px solid blue;margin:0.5em}\n" +
             ".p,.r{position:absolute;}\n" +
@@ -75,8 +78,9 @@ public class PDFDomTree extends PDFBoxTree
     protected int textcnt;
     /** Page counter for assigning IDs to the pages. */
     protected int pagecnt;
-    
-    
+
+    protected PDFDomTreeConfig config;
+
     /**
      * Creates a new PDF DOM parser.
      * @throws IOException
@@ -87,7 +91,19 @@ public class PDFDomTree extends PDFBoxTree
         super();
         init();
     }
-    
+
+    /**
+     * Creates a new PDF DOM parser.
+     * @throws IOException
+     * @throws ParserConfigurationException
+     */
+    public PDFDomTree(PDFDomTreeConfig config) throws IOException, ParserConfigurationException
+    {
+        this();
+        if (config != null)
+            this.config = config;
+    }
+
     /**
      * Internal initialization.
      * @throws ParserConfigurationException
@@ -96,6 +112,7 @@ public class PDFDomTree extends PDFBoxTree
     {
         pagecnt = 0;
         textcnt = 0;
+        this.config = PDFDomTreeConfig.createDefaultConfig();
     }
     
     /**
@@ -504,30 +521,76 @@ public class PDFDomTree extends PDFBoxTree
     protected String createGlobalStyle()
     {
         StringBuilder ret = new StringBuilder();
-        ret.append(createEmbeddedFonts());
+        ret.append(createFontFaces());
         ret.append("\n");
         ret.append(defaultStyle);
         return ret.toString();
     }
-    
-    protected String createEmbeddedFonts()
+
+    @Override
+    protected void updateFontTable()
+    {
+        // skip font processing completley if ignore fonts mode to optimize processing speed
+        if (config.getFontMode() != FontExtractMode.IGNORE_FONTS)
+            super.updateFontTable();
+    }
+
+    protected String createFontFaces()
     {
         StringBuilder ret = new StringBuilder();
         for (FontTable.Entry font : fontTable.values())
         {
-            ret.append("@font-face {");
-            ret.append("font-family:\"").append(font.usedName).append("\";");
-            ret.append("src:url('");
-            try
-            {
-                ret.append(font.getDataURL());
-            } catch (IOException e) {
+            switch(config.getFontMode()) {
+                case EMBED_BASE64:
+                    createEmbeddedFont(ret, font);
+                    break;
+                case SAVE_TO_DIR:
+                    createFontSavedToDisk(ret, font);
+                    break;
+                case IGNORE_FONTS:
+                    break;
             }
-            ret.append("');");
-            ret.append("}\n");
         }
         
         return ret.toString();
     }
-    
+
+    private void createEmbeddedFont(StringBuilder ret, FontTable.Entry font)
+    {
+        ret.append("@font-face {");
+        ret.append("font-family:\"").append(font.usedName).append("\";");
+        ret.append("src:url('");
+        try
+        {
+            ret.append(font.getDataURL());
+        } catch (IOException e) {
+        }
+        ret.append("');");
+        ret.append("}\n");
+    }
+
+    private void createFontSavedToDisk(StringBuilder ret, FontTable.Entry font)
+    {
+        ret.append("@font-face {");
+        ret.append("font-family:\"").append(font.usedName).append("\";");
+        ret.append("src:url('");
+        try
+        {
+            String fontDir = "";
+            if(config.getFontExtractDirectory() != null)
+                fontDir = config.getFontExtractDirectory().getPath() + "/";
+
+            String fontPath = fontDir + font.fontName + "." + font.getFileEnding();
+            File file = new File(fontPath);
+            if (!file.exists())
+                FileUtils.writeByteArrayToFile(file, font.getFontData());
+
+            ret.append(fontPath);
+        } catch (IOException e) {
+        }
+        ret.append("');");
+        ret.append("format(woff);");
+        ret.append("}\n");
+    }
+
 }

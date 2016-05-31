@@ -16,23 +16,32 @@ import static org.hamcrest.number.OrderingComparison.lessThan;
 
 public class TestUtils
 {
-    public static Document parseWithPdfDomTree(String resource)
-            throws IOException, ParserConfigurationException, TransformerException
+    public static Document parseWithPdfDomTree(String resource) throws Exception
+    {
+        return parseWithPdfDomTree(resource, PDFDomTreeConfig.createDefaultConfig());
+    }
+
+    public static Document parseWithPdfDomTree(String resource, PDFDomTreeConfig config) throws Exception
     {
         InputStream is = TestUtils.class.getResourceAsStream(resource);
-        Document doc = parseWithPdfDomTree(is);
+        Document doc = parseWithPdfDomTree(is, config);
         is.close();
-//        File debugOutFile = new File(resource.replace(".pdf", ".html").replaceAll(".*/",""));
-//        FileUtils.write(debugOutFile, doc.outerHtml());
+        // File debugOutFile = new File(resource.replace(".pdf", ".html").replaceAll(".*/",""));
+        // FileUtils.write(debugOutFile, doc.outerHtml());
 
         return doc;
     }
 
-    public static Document parseWithPdfDomTree(InputStream is)
+    public static Document parseWithPdfDomTree(InputStream is) throws Exception
+    {
+        return parseWithPdfDomTree(is, PDFDomTreeConfig.createDefaultConfig());
+    }
+
+    public static Document parseWithPdfDomTree(InputStream is, PDFDomTreeConfig config)
             throws IOException, ParserConfigurationException, TransformerException
     {
         PDDocument pdf = PDDocument.load(is);
-        PDFDomTree parser = new PDFDomTree();
+        PDFDomTree parser = new PDFDomTree(config);
 
         Writer output = new StringWriter();
         parser.writeText(pdf, output);
