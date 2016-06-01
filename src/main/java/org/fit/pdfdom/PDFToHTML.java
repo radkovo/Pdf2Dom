@@ -23,8 +23,11 @@ import java.io.File;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.io.Writer;
+import java.util.ArrayList;
+import java.util.List;
 
 import org.apache.pdfbox.pdmodel.PDDocument;
+import org.fit.pdfdom.PDFDomTreeConfig.FontExtractMode;
 
 /**
  * @author burgetr
@@ -35,16 +38,18 @@ public class PDFToHTML
 
     public static void main(String[] args)
     {
-        
         if (args.length < 1)
         {
             System.out.println("Usage: PDFToHTML <infile> [<outfile>]");
+            System.out.println("Options: ");
+            System.out.println("-fm=[mode] Font conversion mode. [mode] = EMBED_BASE64, SAVE_TO_DIR, IGNORE_FONTS");
+            System.out.println("-fdir=[path] Directory to extract fonts to. [path] = font extract directory ie dir/my-font-dir");
             System.exit(1);
         }
         
         String infile = args[0];
         String outfile;
-        if (args.length > 1)
+        if (args.length > 1 && !args[1].startsWith("-"))
             outfile = args[1];
         else
         {
@@ -53,12 +58,14 @@ public class PDFToHTML
                 base = base.substring(0, base.length() - 4);
             outfile = base + ".html";
         }
-        
+
+        PDFDomTreeConfig config = parseOptions(args);
+
         PDDocument document = null;
         try
         {
             document = PDDocument.load(new File(infile));
-            PDFDomTree parser = new PDFDomTree();
+            PDFDomTree parser = new PDFDomTree(config);
             //parser.setDisableImageData(true);
             Writer output = new PrintWriter(outfile, "utf-8");
             parser.writeText(document, output);
@@ -82,7 +89,50 @@ public class PDFToHTML
                 }
             }
         }
-        
     }
 
+    private static PDFDomTreeConfig parseOptions(String[] args)
+    {
+        PDFDomTreeConfig config = PDFDomTreeConfig.createDefaultConfig();
+        List<CommandLineFlag> flags = parseFlags(args);
+        for (CommandLineFlag flagOn : flags)
+        {
+            if (flagOn.flagName.equals("fm"))
+            {
+                FontExtractMode type = FontExtractMode.valueOf(flagOn.value.toUpperCase());
+                config.setFontMode(type);
+            } else if (flagOn.flagName.equals("fdir"))
+                config.setFontExtractDirectory(new File(flagOn.value));
+        }
+
+        return config;
+    }
+
+    private static List<CommandLineFlag> parseFlags(String[] args)
+    {
+        List<CommandLineFlag> flags = new ArrayList<CommandLineFlag>();
+        for (String argOn : args)
+        {
+            if (argOn.startsWith("-"))
+                flags.add(CommandLineFlag.parse(argOn));
+        }
+        return flags;
+    }
+
+    private static class CommandLineFlag
+    {
+        public String flagName;
+        public String value = "";
+
+        public static CommandLineFlag parse(String argOn)
+        {
+            CommandLineFlag flag = new CommandLineFlag();
+            String[] flagSplit = argOn.split("=");
+            flag.flagName = flagSplit[0].replace("-", "");
+            if (flagSplit.length > 1)
+                flag.value = flagSplit[1].replace("=", "");
+
+            return flag;
+        }
+    }
 }

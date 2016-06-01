@@ -59,6 +59,7 @@ public class FontTable extends HashMap<String, FontTable.Entry>
 
         private byte[] cachedFontData;
         private String mimeType = "x-font-truetype";
+        private String fileEnding;
 
         public Entry(String fontName, String usedName, PDFontDescriptor descriptor)
         {
@@ -73,8 +74,9 @@ public class FontTable extends HashMap<String, FontTable.Entry>
             if (getFontData() != null)
                 cdata = Base64Coder.encode(getFontData());
 
-            return String.format("data:application/%s;base64,%s", mimeType, new String(cdata));
+            return String.format("data:%s;base64,%s", mimeType, new String(cdata));
         }
+
 
         public byte[] getFontData() throws IOException
         {
@@ -109,7 +111,8 @@ public class FontTable extends HashMap<String, FontTable.Entry>
         {
             // otf/OpenType/ttf/TrueType can be used as is by browsers, could convert to WOFF though for
             // optimal html output.
-            mimeType = "x-font-truetype";
+            mimeType = "application/x-font-truetype";
+            fileEnding = "otf";
             return fontFile.toByteArray();
         }
 
@@ -126,7 +129,8 @@ public class FontTable extends HashMap<String, FontTable.Entry>
             try
             {
                 FVFont font = FontVerter.convertFont(fontFile.toByteArray(), FontVerter.FontFormat.WOFF1);
-                mimeType = "x-font-woff";
+                mimeType = "application/x-font-woff";
+                fileEnding = font.getProperties().getFileEnding();
 
                 return font.getData();
             } catch (Exception ex) {
@@ -160,11 +164,14 @@ public class FontTable extends HashMap<String, FontTable.Entry>
             return true;
         }
 
+        public String getFileEnding()
+        {
+            return fileEnding;
+        }
+
         private FontTable getOuterType()
         {
             return FontTable.this;
         }
-
     }
-
 }
