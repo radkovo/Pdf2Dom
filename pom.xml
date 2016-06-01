@@ -145,7 +145,7 @@
 		<dependency>
 			<groupId>org.fontverter</groupId>
 			<artifactId>FontVerter</artifactId>
-			<version>1.2</version>
+			<version>1.2.10</version>
 		</dependency>
 		<dependency>
 			<groupId>junit</groupId>
