@@ -380,7 +380,7 @@ public abstract class PDFBoxTree extends PDFTextStripper
             {
                 PDCIDFont descendantFont = ((PDType0Font) font).getDescendantFont();
                 if (descendantFont instanceof PDCIDFontType2)
-                    table.addEntry(font.getName(), descendantFont.getFontDescriptor());
+                    table.addEntry(font.getName(), font);
                 else
                     log.warn(fontNotSupportedMessage, font.getName(), font.getClass().getSimpleName());
             }
