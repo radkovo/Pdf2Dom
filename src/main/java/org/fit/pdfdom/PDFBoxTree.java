@@ -373,19 +373,19 @@ public abstract class PDFBoxTree extends PDFTextStripper
             PDFont font = resources.getFont(key);
             if (font instanceof PDTrueTypeFont)
             {
-                table.addEntry(font.getName(), font.getFontDescriptor());
+                table.addEntry( font);
                 log.debug("Font: " + font.getName() + " TTF");
             }
             else if (font instanceof PDType0Font)
             {
                 PDCIDFont descendantFont = ((PDType0Font) font).getDescendantFont();
                 if (descendantFont instanceof PDCIDFontType2)
-                    table.addEntry(font.getName(), font);
+                    table.addEntry(font);
                 else
                     log.warn(fontNotSupportedMessage, font.getName(), font.getClass().getSimpleName());
             }
             else if (font instanceof PDType1CFont)
-                table.addEntry(font.getName(), font.getFontDescriptor());
+                table.addEntry(font);
             else
                 log.warn(fontNotSupportedMessage, font.getName(), font.getClass().getSimpleName());
         }
@@ -725,7 +725,7 @@ public abstract class PDFBoxTree extends PDFTextStripper
                 family = knownFontFamily;
             else
             {
-                family = fontTable.getUsedName(font);
+                family = fontTable.getUsedName(text.getFont());
                 if (family == null)
                     family = font;
             }

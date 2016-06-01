@@ -538,7 +538,7 @@ public class PDFDomTree extends PDFBoxTree
     protected String createFontFaces()
     {
         StringBuilder ret = new StringBuilder();
-        for (FontTable.Entry font : fontTable.values())
+        for (FontTable.Entry font : fontTable.getEntries())
         {
             switch(config.getFontMode()) {
                 case EMBED_BASE64:
