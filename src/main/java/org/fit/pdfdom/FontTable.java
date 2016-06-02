@@ -4,7 +4,11 @@
 package org.fit.pdfdom;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import org.apache.pdfbox.pdmodel.common.PDStream;
 import org.apache.pdfbox.pdmodel.font.PDFont;
@@ -21,50 +25,94 @@ import org.slf4j.LoggerFactory;
  *
  * @author burgetr
  */
-public class FontTable extends HashMap<String, FontTable.Entry>
+public class FontTable
 {
-    Logger log = LoggerFactory.getLogger(FontTable.class);
+    private static Logger log = LoggerFactory.getLogger(FontTable.class);
     private static final long serialVersionUID = 1L;
-    private static int nextNameIndex = 1;
+    private static Pattern fontFamilyRegex = Pattern.compile("([^+^-]*)[+-]([^+]*)");
 
-    public void addEntry(String fontName, PDFontDescriptor descriptor)
+    private List<Entry> entries = new ArrayList<Entry>();
+
+    public void addEntry(PDFont font)
     {
-        FontTable.Entry entry = get(fontName);
+        FontTable.Entry entry = get(font);
+
         if (entry == null)
         {
-            String usedName = nextUsedName();
-            FontTable.Entry newEntry = new FontTable.Entry(fontName, usedName, descriptor);
+            String fontName = font.getName();
+            String family = findFontFamily(fontName);
 
-            if(newEntry.isEntryValid())
-                put(fontName, newEntry);
+            String usedName = nextUsedName(family);
+            FontTable.Entry newEntry = new FontTable.Entry(font.getName(), usedName, font);
+
+            if (newEntry.isEntryValid())
+                add(newEntry);
         }
     }
 
-    public void addEntry(String fontName, PDFont font)
+    public Entry get(PDFont find)
     {
-        FontTable.Entry entry = get(fontName);
-        if (entry == null)
+        for (Entry entryOn : entries)
         {
-            String usedName = nextUsedName();
-            FontTable.Entry newEntry = new FontTable.Entry(fontName, usedName, font);
-
-            if(newEntry.isEntryValid())
-                put(fontName, newEntry);
+            if (entryOn.equalToPDFont(find))
+                return entryOn;
         }
+
+        return null;
     }
 
-    public String getUsedName(String fontName)
+    public List<Entry> getEntries()
     {
-        FontTable.Entry entry = get(fontName);
+        return new ArrayList<Entry>(entries);
+    }
+
+    public String getUsedName(PDFont font)
+    {
+        FontTable.Entry entry = get(font);
         if (entry == null)
             return null;
         else
             return entry.usedName;
     }
 
-    protected String nextUsedName()
+    protected String nextUsedName(String fontName)
     {
-        return "F" + (nextNameIndex++);
+        int i = 1;
+        String usedName = fontName;
+        while (isNameUsed(usedName))
+            usedName = fontName + i;
+
+        return usedName;
+    }
+
+    protected boolean isNameUsed(String name)
+    {
+        for (Entry entryOn : entries)
+        {
+            if (entryOn.usedName.equals(name))
+                return true;
+        }
+
+        return false;
+    }
+
+    protected void add(Entry entry) {
+        entries.add(entry);
+    }
+
+    private String findFontFamily(String fontName)
+    {
+        // pdf font family name isn't always populated so have to find ourselves from full name
+        String familyName = fontName;
+
+        Matcher familyMatcher = fontFamilyRegex.matcher(fontName);
+        if (familyMatcher.find())
+            // currently tacking on weight/style too since we don't generate html for it yet
+            // and it's helpful for debugugging
+            familyName = familyMatcher.group(1) + " " + familyMatcher.group(2);
+
+        // browsers will barf if + in family name
+        return familyName.replaceAll("[+]"," ");
     }
 
     public class Entry
@@ -77,13 +125,6 @@ public class FontTable extends HashMap<String, FontTable.Entry>
         private byte[] cachedFontData;
         private String mimeType = "x-font-truetype";
         private String fileEnding;
-
-        public Entry(String fontName, String usedName, PDFontDescriptor descriptor)
-        {
-            this.fontName = fontName;
-            this.usedName = usedName;
-            this.descriptor = descriptor;
-        }
 
         public Entry(String fontName, String usedName, PDFont font)
         {
@@ -213,6 +254,15 @@ public class FontTable extends HashMap<String, FontTable.Entry>
             }
 
             return new byte[0];
+        }
+
+        public boolean equalToPDFont(PDFont compare) {
+            // Appears you can have two different fonts with the same actual font name since text position font
+            // references go off a seperate dict lookup name. PDFBox doesn't include the lookup name with the
+            // PDFont, so might have to submit a change there to be really sure fonts are indeed the same.
+            return compare.getName().equals(baseFont.getName()) &&
+                    compare.getType().equals(baseFont.getType()) &&
+                    compare.getSubType().equals(baseFont.getSubType());
         }
 
         @Override
