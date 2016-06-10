@@ -6,12 +6,12 @@
  * it under the terms of the GNU Lesser General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- *  
+ *
  * Pdf2Dom is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
  * GNU Lesser General Public License for more details.
- *  
+ *
  * You should have received a copy of the GNU Lesser General Public License
  * along with CSSBox. If not, see <http://www.gnu.org/licenses/>.
  *
@@ -23,15 +23,12 @@ import java.awt.geom.AffineTransform;
 import java.awt.geom.Point2D;
 import java.awt.geom.Rectangle2D;
 import java.awt.image.BufferedImage;
-import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.Vector;
-
-import javax.imageio.ImageIO;
 
 import org.apache.pdfbox.contentstream.operator.Operator;
 import org.apache.pdfbox.contentstream.operator.color.SetNonStrokingColor;
@@ -70,6 +67,7 @@ import org.apache.pdfbox.pdmodel.graphics.state.RenderingMode;
 import org.apache.pdfbox.text.PDFTextStripper;
 import org.apache.pdfbox.text.TextPosition;
 import org.apache.pdfbox.util.Matrix;
+import org.fit.pdfdom.resource.ImageResource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import static org.apache.pdfbox.pdmodel.graphics.state.RenderingMode.*;
@@ -79,13 +77,13 @@ import static org.apache.pdfbox.pdmodel.graphics.state.RenderingMode.*;
  * the appropriate abstract methods in order to render a page, text box, etc. The particular
  * implementations are expected to implement these actions in order to build the resulting
  * document tree.
- * 
+ *
  * @author burgetr
  */
 public abstract class PDFBoxTree extends PDFTextStripper
 {
     private static Logger log = LoggerFactory.getLogger(PDFBoxTree.class);
-    
+
     /** Length units used in the generated CSS */
     public static final String UNIT = "pt";
 
@@ -98,7 +96,7 @@ public abstract class PDFBoxTree extends PDFTextStripper
     protected static String[] cssFontWeight = { "normal", "normal", "bold",   "normal", "bold"  };
     /** Font styles corresponding to the font subtypes in {@link PDFDomTree#pdFontType} */
     protected static String[] cssFontStyle =  { "normal", "normal", "normal", "italic", "italic"  };
-    
+
     /** When set to <code>true</code>, the graphics in the PDF file will be ignored. */
     protected boolean disableGraphics = false;
     /** When set to <code>true</code>, the embedded images will be ignored. */
@@ -109,18 +107,18 @@ public abstract class PDFBoxTree extends PDFTextStripper
     protected int startPage;
     /** Last page to be processed */
     protected int endPage;
-    
+
     /** Table of embedded fonts */
     protected FontTable fontTable;
-    
+
     /** The PDF page currently being processed */
     protected PDPage pdpage;
-    
+
     /** Current text coordinates (the coordinates of the last encountered text box). */
     protected float cur_x;
     /** Current text coordinates (the coordinates of the last encountered text box). */
     protected float cur_y;
-    
+
     /** Current path construction position */
     protected float path_x;
     /** Current path construction position */
@@ -129,36 +127,36 @@ public abstract class PDFBoxTree extends PDFTextStripper
     protected float path_start_x;
     /** Starting path construction position */
     protected float path_start_y;
-    
+
     /** Previous positioned text. */
     protected TextPosition lastText = null;
-    
+
     /** Last diacritic if any */
     protected TextPosition lastDia = null;
-    
+
     /** The text box currently being created. */
     protected StringBuilder textLine;
 
     /** Current text line metrics */
     protected TextMetrics textMetrics;
-    
+
     /** Current graphics path */
     protected Vector<PathSegment> graphicsPath;
 
     /** The style of the future box being modified by the operators */
     protected BoxStyle style;
-    
+
     /** The style of the text line being created */
     protected BoxStyle curstyle;
 
-    
-    
+
+
     public PDFBoxTree() throws IOException
     {
         super();
         super.setSortByPosition(true);
         super.setSuppressDuplicateOverlappingText(true);
-        
+
         //add operators for tracking the graphic state
         addOperator(new SetStrokingColorSpace());
         addOperator(new SetNonStrokingColorSpace());
@@ -180,7 +178,7 @@ public abstract class PDFBoxTree extends PDFTextStripper
         addOperator(new SetNonStrokingColorN());
         addOperator(new SetFontAndSize());
         addOperator(new SetLineWidth());
-        
+
         init();
     }
 
@@ -198,8 +196,8 @@ public abstract class PDFBoxTree extends PDFTextStripper
         endPage = Integer.MAX_VALUE;
         fontTable = new FontTable();
     }
-    
-    
+
+
     public void processPage(PDPage page) throws IOException
     {
         pdpage = page;
@@ -208,7 +206,7 @@ public abstract class PDFBoxTree extends PDFTextStripper
         super.processPage(page);
         finishBox();
     }
-    
+
     /**
      * Checks whether the graphics processing is disabled.
      * @return <code>true</code> when the graphics processing is disabled in the parser configuration.
@@ -294,14 +292,14 @@ public abstract class PDFBoxTree extends PDFTextStripper
      * Adds a new page to the resulting document and makes it a current (active) page.
      */
     protected abstract void startNewPage();
-    
+
     /**
      * Creates a new text box in the current page. The style and position of the text are contained
      * in the {@link PDFBoxTree#curstyle} property. 
      * @param data The text contents.
      */
     protected abstract void renderText(String data, TextMetrics metrics);
-    
+
     /**
      * Adds a rectangle to the current page on the specified position.
      * @param rect the rectangle to be rendered
@@ -309,19 +307,19 @@ public abstract class PDFBoxTree extends PDFTextStripper
      * @param fill should the rectangle be filled?
      */
     protected abstract void renderPath(List<PathSegment> path, boolean stroke, boolean fill);
-    
+
     /**
      * Adds an image to the current page.
+     * @param type the image type: <code>"png"</code> or <code>"jpeg"</code>
      * @param x the X coordinate of the image
      * @param y the Y coordinate of the image
      * @param width the width coordinate of the image
      * @param height the height coordinate of the image
-     * @param type the image type: <code>"png"</code> or <code>"jpeg"</code>
      * @param data the image data depending on the specified type
      * @return
      */
-    protected abstract void renderImage(float x, float y, float width, float height, String mimetype, byte[] data);
-    
+    protected abstract void renderImage(float x, float y, float width, float height, ImageResource data) throws IOException;
+
     protected float[] toRectangle(List<PathSegment> path)
     {
         if (path.size() == 4)
@@ -346,7 +344,7 @@ public abstract class PDFBoxTree extends PDFTextStripper
         else
             return null; //four segments required
     }
-    
+
     /**
      * Updates the font table by adding new fonts used at the current page.
      */
@@ -363,7 +361,7 @@ public abstract class PDFBoxTree extends PDFTextStripper
             }
         }
     }
-    
+
     private void processFontResources(PDResources resources, FontTable table) throws IOException
     {
         String fontNotSupportedMessage = "Font: {} skipped because type '{}' is not supported.";
@@ -403,9 +401,9 @@ public abstract class PDFBoxTree extends PDFTextStripper
         }
 
     }
-    
+
     //===========================================================================================
-    
+
     @Override
     protected void processOperator(Operator operator, List<COSBase> arguments)
             throws IOException
@@ -467,7 +465,7 @@ public abstract class PDFBoxTree extends PDFTextStripper
                 graphicsPath.add(new PathSegment(path_x, path_y, path_start_x, path_start_y));
             }
         }
-        
+
         //rectangle
         else if (operation.equals("re"))
         {
@@ -523,7 +521,7 @@ public abstract class PDFBoxTree extends PDFTextStripper
             renderPath(graphicsPath, true, true);
             graphicsPath.removeAllElements();
         }
-        
+
         //cancel path
         else if (operation.equals("n"))
         {
@@ -536,7 +534,7 @@ public abstract class PDFBoxTree extends PDFTextStripper
             if (!disableImages)
                 processImageOperation(arguments);
         }
-        
+
         super.processOperator(operator, arguments);
     }
 
@@ -548,29 +546,44 @@ public abstract class PDFBoxTree extends PDFTextStripper
         {
             PDImageXObject pdfImage = (PDImageXObject) xobject;
             BufferedImage outputImage = pdfImage.getImage();
+            outputImage = rotateImage(outputImage);
 
-            // x, y and size are handled by css attributes but still need to rotate the image so pulling
-            // only rotation out of the matrix so no giant whitespace offset from translations
-            Matrix ctm = getGraphicsState().getCurrentTransformationMatrix();
-            AffineTransform tr = ctm.createAffineTransform();
-            double rotate = Math.atan2(tr.getShearY(), tr.getScaleY()) - Math.toRadians(pdpage.getRotation());
-            outputImage = ImageUtils.rotateImage(outputImage, rotate);
-            byte[] imageData = getImageData(outputImage);
+            ImageResource imageData = new ImageResource(getTitle(), outputImage);
 
-            Rectangle2D imageBounds = pdfImage.getImage().getRaster().getBounds();
-            AffineTransform pageTransform = createCurrentPageTransformation();
-            AffineTransform imageTransform = new AffineTransform(ctm.createAffineTransform());
-            imageTransform.scale(1.0 / pdfImage.getWidth(), -1.0 / pdfImage.getHeight());
-            imageTransform.translate(0, -pdfImage.getHeight());
-            pageTransform.concatenate(imageTransform);
-            Rectangle2D bounds =
-                    pageTransform.createTransformedShape(imageBounds).getBounds2D();
-
+            Rectangle2D bounds = calculateImagePosition(pdfImage);
             float x = (float) bounds.getX();
             float y = (float) bounds.getY();
 
-            renderImage(x, y, (float) bounds.getWidth(), (float) bounds.getHeight(), "image/png", imageData);
+            renderImage(x, y, (float) bounds.getWidth(), (float) bounds.getHeight(), imageData);
         }
+    }
+
+    private BufferedImage rotateImage(BufferedImage outputImage)
+    {
+        // x, y and size are handled by css attributes but still need to rotate the image so pulling
+        // only rotation out of the matrix so no giant whitespace offset from translations
+        Matrix ctm = getGraphicsState().getCurrentTransformationMatrix();
+
+        AffineTransform tr = ctm.createAffineTransform();
+        double rotate = Math.atan2(tr.getShearY(), tr.getScaleY()) - Math.toRadians(pdpage.getRotation());
+        outputImage = ImageUtils.rotateImage(outputImage, rotate);
+
+        return outputImage;
+    }
+
+    private Rectangle2D calculateImagePosition(PDImageXObject pdfImage) throws IOException
+    {
+        Matrix ctm = getGraphicsState().getCurrentTransformationMatrix();
+        Rectangle2D imageBounds = pdfImage.getImage().getRaster().getBounds();
+
+        AffineTransform imageTransform = new AffineTransform(ctm.createAffineTransform());
+        imageTransform.scale(1.0 / pdfImage.getWidth(), -1.0 / pdfImage.getHeight());
+        imageTransform.translate(0, -pdfImage.getHeight());
+
+        AffineTransform pageTransform = createCurrentPageTransformation();
+        pageTransform.concatenate(imageTransform);
+
+        return pageTransform.createTransformedShape(imageBounds).getBounds2D();
     }
 
     @Override
@@ -603,7 +616,7 @@ public abstract class PDFBoxTree extends PDFTextStripper
             System.out.println(" Height dir: " + text.getHeightDir());
             System.out.println(" XScale: " + text.getXScale());
             System.out.println(" YScale: " + text.getYScale());*/
-            
+
             float distx = 0;
             float disty = 0;
             if (lastText != null)
@@ -619,7 +632,7 @@ public abstract class PDFBoxTree extends PDFTextStripper
             updateStyle(style, text);
             if (!style.equals(curstyle))
             	split = true;
-            
+
             if (split) //start of a new box
             {
             	//finish current box (if any)
@@ -637,8 +650,8 @@ public abstract class PDFBoxTree extends PDFTextStripper
                 textMetrics.append(text);
             lastText = text;
         }
-    }    
-    
+    }
+
     /**
      * Finishes the current box - empties the text line buffer and creates a DOM element from it.
      */
@@ -651,7 +664,7 @@ public abstract class PDFBoxTree extends PDFTextStripper
                 s = textLine.reverse().toString();
             else
                 s = textLine.toString();
-            
+
             curstyle.setLeft(textMetrics.getX());
             curstyle.setTop(textMetrics.getTop());
             curstyle.setLineHeight(textMetrics.getHeight());
@@ -661,7 +674,7 @@ public abstract class PDFBoxTree extends PDFTextStripper
 	        textMetrics = null;
     	}
     }
-    
+
     /**
      * Checks whether the text directionality corresponds to reversed text (very rough) 
      * @param directionality the Character.directionality
@@ -676,12 +689,12 @@ public abstract class PDFBoxTree extends PDFTextStripper
             case Character.DIRECTIONALITY_RIGHT_TO_LEFT_EMBEDDING:
             case Character.DIRECTIONALITY_RIGHT_TO_LEFT_OVERRIDE:
                 return true;
-                
+
             default:
                 return false;
         }
     }
-    
+
     /**
      * Updates the text style according to a new text position
      * @param bstyle the style to be updated
@@ -693,8 +706,8 @@ public abstract class PDFBoxTree extends PDFTextStripper
         String family = null;
         String weight = null;
         String fstyle = null;
-        
-        bstyle.setFontSize(text.getFontSizeInPt()); 
+
+        bstyle.setFontSize(text.getFontSizeInPt());
         bstyle.setLineHeight(text.getHeight());
 
         if (font != null)
@@ -717,7 +730,7 @@ public abstract class PDFBoxTree extends PDFTextStripper
             	bstyle.setFontStyle(fstyle);
             else
             	bstyle.setFontStyle(cssFontStyle[0]);
-            
+
             //font family
             //If it's a known common font don't embed in html output to save space
             String knownFontFamily = findKnownFontFamily(font);
@@ -850,7 +863,7 @@ public abstract class PDFBoxTree extends PDFTextStripper
         else
             return 0;
     }
-    
+
     /**
      * Obtains a number from a PDF number value
      * @param value the PDF value of the Integer or Float type
@@ -863,7 +876,7 @@ public abstract class PDFBoxTree extends PDFTextStripper
         else
             return 0;
     }
-    
+
     /**
      * Obtains a length in points from a PDF number value
      * @param value the PDF value of the Integer or Fload type
@@ -873,7 +886,7 @@ public abstract class PDFBoxTree extends PDFTextStripper
     {
         return floatValue(value); //no conversion is done right now, we count in PDF units
     }
-    
+
     /**
      * Obtains a string from a PDF value
      * @param value the PDF value of the String, Integer or Float type
@@ -888,7 +901,7 @@ public abstract class PDFBoxTree extends PDFTextStripper
         else
             return "";
     }
-    
+
     /**
      * Creates a CSS rgb() specification from the color component values.
      * @param ir red value (0..255)
@@ -900,7 +913,7 @@ public abstract class PDFBoxTree extends PDFTextStripper
     {
     	return String.format("#%02x%02x%02x", ir, ig, ib);
     }
-    
+
     /**
      * Creates a CSS rgb() specification from the color component values.
      * @param r red value (0..1)
@@ -912,7 +925,7 @@ public abstract class PDFBoxTree extends PDFTextStripper
     {
         return colorString((int) (r * 255), (int) (g * 255), (int) (b * 255));
     }
-    
+
     /**
      * Creates a CSS rgb specification from a PDF color
      * @param pdcolor
@@ -930,26 +943,20 @@ public abstract class PDFBoxTree extends PDFTextStripper
         }
         return color;
     }
-    
-    /**
-     * Obtains the image data from a PDF image object
-     * @param image the source image
-     * @return the resulting image data
-     * @throws IOException
-     */
-    protected byte[] getImageData(BufferedImage image) throws IOException
-    {
-        ByteArrayOutputStream buffer = new ByteArrayOutputStream();
-        ImageIO.write(image, "PNG", buffer);
 
-        return buffer.toByteArray();
+    protected String getTitle() {
+        String title = document.getDocumentInformation().getTitle();
+        if (title == null || title.isEmpty())
+            title = "PDF Document";
+
+        return title;
     }
 
     protected byte getTextDirectionality(TextPosition text)
     {
         return getTextDirectionality(text.getUnicode());
     }
-    
+
     protected byte getTextDirectionality(String s)
     {
         if (s.length() > 0)
@@ -957,5 +964,5 @@ public abstract class PDFBoxTree extends PDFTextStripper
         else
             return Character.DIRECTIONALITY_UNDEFINED;
     }
-    
+
 }

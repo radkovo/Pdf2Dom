@@ -19,7 +19,6 @@
  */
 package org.fit.pdfdom;
 
-import java.io.File;
 import java.io.IOException;
 import java.io.OutputStreamWriter;
 import java.io.Writer;
@@ -29,10 +28,10 @@ import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
 
-import org.apache.commons.io.FileUtils;
 import org.apache.pdfbox.pdmodel.PDDocument;
 import org.apache.pdfbox.pdmodel.common.PDRectangle;
-import org.fit.pdfdom.PDFDomTreeConfig.FontExtractMode;
+import org.fit.pdfdom.resource.IgnoreResourceHandler;
+import org.fit.pdfdom.resource.ImageResource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.w3c.dom.Document;
@@ -251,11 +250,11 @@ public class PDFDomTree extends PDFBoxTree
     }
     
     @Override
-    protected void renderImage(float x, float y, float width, float height, String mimetype, byte[] data)
+    protected void renderImage(float x, float y, float width, float height, ImageResource resource) throws IOException
     {
-    	curpage.appendChild(createImageElement(x, y, width, height, mimetype, data));
+    	curpage.appendChild(createImageElement(x, y, width, height, resource));
     }
-    
+
     //===========================================================================================
     
     /**
@@ -402,10 +401,10 @@ public class PDFDomTree extends PDFBoxTree
      * @param width the width coordinate of the image
      * @param height the height coordinate of the image
      * @param type the image type: <code>"png"</code> or <code>"jpeg"</code>
-     * @param data the image data depending on the specified type
+     * @param resource the image data depending on the specified type
      * @return
      */
-    protected Element createImageElement(float x, float y, float width, float height, String mimetype, byte[] data)
+    protected Element createImageElement(float x, float y, float width, float height, ImageResource resource) throws IOException
     {
         StringBuilder pstyle = new StringBuilder("position:absolute;");
         pstyle.append("left:").append(x).append(UNIT).append(';');
@@ -416,13 +415,11 @@ public class PDFDomTree extends PDFBoxTree
         
         Element el = doc.createElement("img");
         el.setAttribute("style", pstyle.toString());
-        
-        if (!disableImageData)
-        {
-            char[] cdata = Base64Coder.encode(data);
-            String imgdata = "data:" + mimetype + ";base64," + new String(cdata);
-            el.setAttribute("src", imgdata);
-        }
+
+        String imgSrc = config.getImageHandler().handleResource(resource);
+
+        if (!disableImageData && !imgSrc.isEmpty())
+            el.setAttribute("src", imgSrc);
         else
             el.setAttribute("src", "");
         
@@ -531,7 +528,7 @@ public class PDFDomTree extends PDFBoxTree
     protected void updateFontTable()
     {
         // skip font processing completley if ignore fonts mode to optimize processing speed
-        if (config.getFontMode() != FontExtractMode.IGNORE_FONTS)
+        if (!(config.getFontHandler() instanceof IgnoreResourceHandler))
             super.updateFontTable();
     }
 
@@ -539,58 +536,26 @@ public class PDFDomTree extends PDFBoxTree
     {
         StringBuilder ret = new StringBuilder();
         for (FontTable.Entry font : fontTable.getEntries())
-        {
-            switch(config.getFontMode()) {
-                case EMBED_BASE64:
-                    createEmbeddedFont(ret, font);
-                    break;
-                case SAVE_TO_DIR:
-                    createFontSavedToDisk(ret, font);
-                    break;
-                case IGNORE_FONTS:
-                    break;
-            }
-        }
-        
+            createFontFace(ret, font);
+
         return ret.toString();
     }
 
-    private void createEmbeddedFont(StringBuilder ret, FontTable.Entry font)
+    private void createFontFace(StringBuilder ret, FontTable.Entry font)
     {
         ret.append("@font-face {");
         ret.append("font-family:\"").append(font.usedName).append("\";");
         ret.append("src:url('");
         try
         {
-            ret.append(font.getDataURL());
-        } catch (IOException e) {
-        }
-        ret.append("');");
-        ret.append("}\n");
-    }
-
-    private void createFontSavedToDisk(StringBuilder ret, FontTable.Entry font)
-    {
-        ret.append("@font-face {");
-        ret.append("font-family:\"").append(font.usedName).append("\";");
-        ret.append("src:url('");
-        try
+            String src = config.getFontHandler().handleResource(font);
+            ret.append(src);
+        } catch (IOException e)
         {
-            String fontDir = "";
-            if(config.getFontExtractDirectory() != null)
-                fontDir = config.getFontExtractDirectory().getPath() + "/";
-
-            String fontPath = fontDir + font.fontName + "." + font.getFileEnding();
-            File file = new File(fontPath);
-            if (!file.exists())
-                FileUtils.writeByteArrayToFile(file, font.getFontData());
-
-            ret.append(fontPath);
-        } catch (IOException e) {
+            log.error("Error writing font face data for font: " + font.getName());
+            e.printStackTrace();
         }
         ret.append("');");
-        ret.append("format(woff);");
         ret.append("}\n");
     }
-
 }
