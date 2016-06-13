@@ -50,6 +50,7 @@ import org.fit.pdfdom.BoxStyle;
 import org.fit.pdfdom.PDFDomTree;
 import org.fit.pdfdom.PathSegment;
 import org.fit.pdfdom.TextMetrics;
+import org.fit.pdfdom.resource.ImageResource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.w3c.dom.Document;
@@ -246,10 +247,10 @@ public class CSSBoxTree extends PDFDomTree
     }*/
 
     @Override
-    protected void renderImage(float x, float y, float width, float height, String mimetype, byte[] data)
+    protected void renderImage(float x, float y, float width, float height, ImageResource resource) throws IOException
     {
         //DOM element
-        Element el = createImageElement(x, y, width, height, mimetype, data);
+        Element el = createImageElement(x, y, width, height, resource);
         curpage.appendChild(el);
         //Image box
         BlockBox block = createBlock(pagebox, el, true);

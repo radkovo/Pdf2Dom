@@ -27,7 +27,9 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.apache.pdfbox.pdmodel.PDDocument;
-import org.fit.pdfdom.PDFDomTreeConfig.FontExtractMode;
+import org.fit.pdfdom.resource.HtmlResourceHandler;
+import org.fit.pdfdom.resource.IgnoreResourceHandler;
+import org.fit.pdfdom.resource.SaveResourceToDirHandler;
 
 /**
  * @author burgetr
@@ -42,8 +44,12 @@ public class PDFToHTML
         {
             System.out.println("Usage: PDFToHTML <infile> [<outfile>]");
             System.out.println("Options: ");
-            System.out.println("-fm=[mode] Font conversion mode. [mode] = EMBED_BASE64, SAVE_TO_DIR, IGNORE_FONTS");
+            System.out.println("-fm=[mode] Font handler mode. [mode] = EMBED_BASE64, SAVE_TO_DIR, IGNORE");
             System.out.println("-fdir=[path] Directory to extract fonts to. [path] = font extract directory ie dir/my-font-dir");
+            System.out.println();
+            System.out.println("-im=[mode] Image handler mode. [mode] = EMBED_BASE64, SAVE_TO_DIR, IGNORE");
+            System.out.println("-idir=[path] Directory to extract images to. [path] = image extract directory ie dir/my-image-dir");
+
             System.exit(1);
         }
         
@@ -94,18 +100,39 @@ public class PDFToHTML
     private static PDFDomTreeConfig parseOptions(String[] args)
     {
         PDFDomTreeConfig config = PDFDomTreeConfig.createDefaultConfig();
+
         List<CommandLineFlag> flags = parseFlags(args);
         for (CommandLineFlag flagOn : flags)
         {
             if (flagOn.flagName.equals("fm"))
             {
-                FontExtractMode type = FontExtractMode.valueOf(flagOn.value.toUpperCase());
-                config.setFontMode(type);
+                HtmlResourceHandler handler = createResourceHandlerFor(flagOn.value);
+                config.setFontHandler(handler);
             } else if (flagOn.flagName.equals("fdir"))
-                config.setFontExtractDirectory(new File(flagOn.value));
+                config.setFontHandler(new SaveResourceToDirHandler(new File(flagOn.value)));
+
+            else if (flagOn.flagName.equals("im"))
+            {
+                HtmlResourceHandler handler = createResourceHandlerFor(flagOn.value);
+                config.setImageHandler(handler);
+            } else if (flagOn.flagName.equals("idir"))
+                config.setImageHandler(new SaveResourceToDirHandler(new File(flagOn.value)));
         }
 
         return config;
+    }
+
+    private static HtmlResourceHandler createResourceHandlerFor(String value)
+    {
+        HtmlResourceHandler handler = PDFDomTreeConfig.embedAsBase64();
+        if (value.equalsIgnoreCase("EMBED_BASE64"))
+            handler = PDFDomTreeConfig.embedAsBase64();
+        else if (value.equalsIgnoreCase("SAVE_TO_DIR"))
+            handler = new SaveResourceToDirHandler();
+        else if (value.equalsIgnoreCase("IGNORE"))
+            handler = new IgnoreResourceHandler();
+
+        return handler;
     }
 
     private static List<CommandLineFlag> parseFlags(String[] args)

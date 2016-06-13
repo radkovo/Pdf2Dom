@@ -1,45 +1,74 @@
+/*
+ *  Copyright (c) Matthew Abboud 2016
+ *
+ *  Pdf2Dom is free software: you can redistribute it and/or modify
+ *  it under the terms of the GNU Lesser General Public License as published by
+ *  the Free Software Foundation, either version 3 of the License, or
+ *  (at your option) any later version.
+ *
+ *  Pdf2Dom is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ *  GNU Lesser General Public License for more details.
+ *
+ *  You should have received a copy of the GNU Lesser General Public License
+ *  along with CSSBox. If not, see <http://www.gnu.org/licenses/>.
+ */
+
 package org.fit.pdfdom;
+
+import org.fit.pdfdom.resource.EmbedAsBase64Handler;
+import org.fit.pdfdom.resource.HtmlResourceHandler;
+import org.fit.pdfdom.resource.IgnoreResourceHandler;
+import org.fit.pdfdom.resource.SaveResourceToDirHandler;
 
 import java.io.File;
 
 public class PDFDomTreeConfig
 {
-    private FontExtractMode fontMode;
-    private File fontExtractDirectory;
+    private HtmlResourceHandler imageHandler;
+    private HtmlResourceHandler fontHandler;
 
     public static PDFDomTreeConfig createDefaultConfig() {
         PDFDomTreeConfig config = new PDFDomTreeConfig();
-        config.fontMode = FontExtractMode.EMBED_BASE64;
+        config.setFontHandler(embedAsBase64());
+        config.setImageHandler(embedAsBase64());
 
         return config;
+    }
+
+    public static HtmlResourceHandler embedAsBase64() {
+        return new EmbedAsBase64Handler();
+    }
+
+    public static HtmlResourceHandler saveToDirectory(File directory) {
+        return new SaveResourceToDirHandler(directory);
+    }
+
+    public static HtmlResourceHandler ignoreResource() {
+        return new IgnoreResourceHandler();
     }
 
     private PDFDomTreeConfig() {
     }
 
-    public FontExtractMode getFontMode()
+    public HtmlResourceHandler getImageHandler()
     {
-        return fontMode;
+        return imageHandler;
     }
 
-    public void setFontMode(FontExtractMode fontMode)
+    public void setImageHandler(HtmlResourceHandler imageHandler)
     {
-        this.fontMode = fontMode;
+        this.imageHandler = imageHandler;
     }
 
-    public File getFontExtractDirectory()
+    public HtmlResourceHandler getFontHandler()
     {
-        return fontExtractDirectory;
+        return fontHandler;
     }
 
-    public void setFontExtractDirectory(File fontExtractDirectory)
+    public void setFontHandler(HtmlResourceHandler fontHandler)
     {
-        this.fontExtractDirectory = fontExtractDirectory;
-    }
-
-    public enum FontExtractMode {
-        EMBED_BASE64,
-        SAVE_TO_DIR,
-        IGNORE_FONTS
+        this.fontHandler = fontHandler;
     }
 }

@@ -10,6 +10,7 @@ import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.transform.TransformerException;
 import java.awt.geom.Rectangle2D;
 import java.io.*;
+import java.util.Properties;
 
 import static org.hamcrest.Matchers.greaterThan;
 import static org.hamcrest.number.OrderingComparison.lessThan;
@@ -23,11 +24,17 @@ public class TestUtils
 
     public static Document parseWithPdfDomTree(String resource, PDFDomTreeConfig config) throws Exception
     {
+        if (!resource.startsWith("/"))
+            resource = "/" + resource;
+
         InputStream is = TestUtils.class.getResourceAsStream(resource);
         Document doc = parseWithPdfDomTree(is, config);
         is.close();
-        // File debugOutFile = new File(resource.replace(".pdf", ".html").replaceAll(".*/",""));
-        // FileUtils.write(debugOutFile, doc.outerHtml());
+
+        if (getOutputEnabled()) {
+            File debugOutFile = new File(resource.replace(".pdf", ".html").replaceAll(".*/", ""));
+            FileUtils.write(debugOutFile, doc.outerHtml());
+        }
 
         return doc;
     }
@@ -49,6 +56,35 @@ public class TestUtils
         String htmlOutput = output.toString();
 
         return Jsoup.parse(htmlOutput);
+    }
+
+    public static Properties getTestConfig()
+    {
+        Properties config = new Properties();
+        String propFileName = "pdf2dom-test-config.properties";
+
+        try
+        {
+            InputStream inputStream = TestUtils.class.getClassLoader().getResourceAsStream(propFileName);
+            if (inputStream != null)
+                config.load(inputStream);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+        return config;
+    }
+
+    public static boolean getBoolConfigProperty(String propertyName) {
+        if (getTestConfig().containsKey(propertyName))
+            return Boolean.parseBoolean(getTestConfig().getProperty(propertyName));
+
+        return false;
+    }
+
+    public static boolean getOutputEnabled()
+    {
+        return getBoolConfigProperty("org.fit.pdf2dom.html-debug-output");
     }
 
     private static String areaAssertMessage = "Target object is not in %s area of containing rectangle";

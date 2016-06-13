@@ -5,7 +5,6 @@ package org.fit.pdfdom;
 
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -14,6 +13,8 @@ import org.apache.pdfbox.pdmodel.common.PDStream;
 import org.apache.pdfbox.pdmodel.font.PDFont;
 import org.apache.pdfbox.pdmodel.font.PDFontDescriptor;
 import org.apache.pdfbox.pdmodel.font.PDType0Font;
+import org.fit.pdfdom.resource.Base64Coder;
+import org.fit.pdfdom.resource.HtmlResource;
 import org.mabb.fontverter.FVFont;
 import org.mabb.fontverter.FontVerter;
 import org.mabb.fontverter.pdf.PdfFontExtractor;
@@ -115,7 +116,7 @@ public class FontTable
         return familyName.replaceAll("[+]"," ");
     }
 
-    public class Entry
+    public class Entry extends HtmlResource
     {
         public String fontName;
         public String usedName;
@@ -128,22 +129,15 @@ public class FontTable
 
         public Entry(String fontName, String usedName, PDFont font)
         {
+            super(fontName);
+
             this.fontName = fontName;
             this.usedName = usedName;
             this.descriptor = font.getFontDescriptor();
             this.baseFont = font;
         }
 
-        public String getDataURL() throws IOException
-        {
-            char[] cdata = new char[0];
-            if (getFontData() != null)
-                cdata = Base64Coder.encode(getFontData());
-
-            return String.format("data:%s;base64,%s", mimeType, new String(cdata));
-        }
-
-        public byte[] getFontData() throws IOException
+        public byte[] getData() throws IOException
         {
             if (cachedFontData != null)
                 return cachedFontData;
@@ -165,7 +159,7 @@ public class FontTable
             byte[] fontData = new byte[0];
             try
             {
-                fontData = getFontData();
+                fontData = getData();
             } catch (IOException e)
             {
                 log.warn("Error loading font '{}' Message: {} {}", fontName, e.getMessage(), e.getClass());
@@ -297,6 +291,8 @@ public class FontTable
             return FontTable.this;
         }
 
+        public String getMimeType() {
+            return mimeType;
+        }
     }
-
 }
