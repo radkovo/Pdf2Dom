@@ -27,7 +27,6 @@ import java.io.File;
 import java.io.IOException;
 
 import static org.fit.pdfdom.TestUtils.getOutputEnabled;
-import static org.hamcrest.CoreMatchers.not;
 
 public class TestImages
 {
@@ -59,6 +58,20 @@ public class TestImages
         File tempFontFile = new File(getFullExtractPath() + "Untitled1.png");
 
         Assert.assertTrue(tempFontFile.exists());
+    }
+
+    @Test
+    public void givenPdfWithImagesSameFileNamesCreated_whenConvertedWithSaveToDirHandler_thenDoesNotGetStuckInInfiniteLoop() throws Exception
+    {
+        PDFDomTreeConfig config = PDFDomTreeConfig.createDefaultConfig();
+        config.setImageHandler(new SaveResourceToDirHandler(getExtractDir()));
+
+        TestUtils.parseWithPdfDomTree("/HorariosMadrid_Segovia.pdf", config);
+        File tempFontFile = new File(getFullExtractPath() + "PDF Document.png");
+        File tempFontFile2 = new File(getFullExtractPath() + "PDF Document1.png");
+
+        Assert.assertTrue(tempFontFile.exists());
+        Assert.assertTrue(tempFontFile2.exists());
     }
 
     private File getExtractDir() throws IOException

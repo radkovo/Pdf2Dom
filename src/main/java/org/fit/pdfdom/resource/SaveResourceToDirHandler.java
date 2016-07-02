@@ -62,8 +62,10 @@ public class SaveResourceToDirHandler implements HtmlResourceHandler
     {
         int i = 1;
         String usedName = fileName;
-        while (writtenFileNames.contains(usedName))
+        while (writtenFileNames.contains(usedName)) {
             usedName = fileName + i;
+            i++;
+        }
 
         return usedName;
     }
