@@ -940,6 +940,8 @@ public abstract class PDFBoxTree extends PDFTextStripper
             color = colorString(rgb[0], rgb[1], rgb[2]);
         } catch (IOException e) {
             log.error("colorString: IOException: {}", e.getMessage());
+        } catch (UnsupportedOperationException e) {
+            log.error("colorString: UnsupportedOperationException: {}", e.getMessage());
         }
         return color;
     }
