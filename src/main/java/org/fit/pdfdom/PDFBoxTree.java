@@ -306,7 +306,7 @@ public abstract class PDFBoxTree extends PDFTextStripper
      * @param stroke should there be a stroke around?
      * @param fill should the rectangle be filled?
      */
-    protected abstract void renderPath(List<PathSegment> path, boolean stroke, boolean fill);
+    protected abstract void renderPath(List<PathSegment> path, boolean stroke, boolean fill) throws IOException;
 
     /**
      * Adds an image to the current page.

@@ -183,6 +183,11 @@
 			<version>1.7.21</version>
 			<scope>test</scope>
 		</dependency>
+		<dependency>
+			<groupId>org.mabb.gfxassert</groupId>
+			<artifactId>GfxAssert</artifactId>
+			<version>0.1.2</version>
+		</dependency>
 	</dependencies>
 
 	<repositories>
