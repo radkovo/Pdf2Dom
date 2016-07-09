@@ -187,7 +187,7 @@ public class FontTable
         private byte[] loadType0TtfDescendantFont() throws IOException
         {
             mimeType = "application/x-font-truetype";
-            fileEnding = "otf";
+            fileEnding = "ttf";
             try
             {
                 FVFont font = PdfFontExtractor.convertType0FontToOpenType((PDType0Font) baseFont);
@@ -237,11 +237,10 @@ public class FontTable
             try
             {
                 // browser validation can fail for many TTF fonts from pdfs
-                if (!font.doesPassStrictValidation())
-                {
+                if (!font.isValid())
                     font.normalize();
-                    return font.getData();
-                }
+
+                return font.getData();
             } catch (Exception ex)
             {
                 ex.printStackTrace();
