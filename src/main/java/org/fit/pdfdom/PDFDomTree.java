@@ -235,7 +235,7 @@ public class PDFDomTree extends PDFBoxTree
     }
 
     @Override
-    protected void renderPath(List<PathSegment> path, boolean stroke, boolean fill)
+    protected void renderPath(List<PathSegment> path, boolean stroke, boolean fill) throws IOException
     {
         float[] rect = toRectangle(path);
         if (rect != null)
@@ -246,6 +246,9 @@ public class PDFDomTree extends PDFBoxTree
         {
             for (PathSegment segm : path)
                 curpage.appendChild(createLineElement(segm.getX1(), segm.getY1(), segm.getX2(), segm.getY2()));
+        }
+        else {
+            curpage.appendChild(createPathImage(path));
         }
     }
     
@@ -392,6 +395,15 @@ public class PDFDomTree extends PDFBoxTree
         el.setAttribute("style", pstyle.toString());
         el.appendChild(doc.createEntityReference("nbsp"));
         return el;
+    }
+
+    protected Element createPathImage(List<PathSegment> path) throws IOException
+    {
+        PathDrawer drawer = new PathDrawer(getGraphicsState());
+        ImageResource renderedPath = drawer.drawPath(path);
+
+        return createImageElement((float) renderedPath.getX(), (float) renderedPath.getY(),
+                renderedPath.getWidth(), renderedPath.getHeight(), renderedPath);
     }
 
     /**

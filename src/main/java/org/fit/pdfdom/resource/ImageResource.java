@@ -25,6 +25,8 @@ import java.io.IOException;
 public class ImageResource extends HtmlResource
 {
     private final BufferedImage image;
+    private double x = 0;
+    private double y = 0;
 
     public ImageResource(String name, BufferedImage image)
     {
@@ -49,5 +51,35 @@ public class ImageResource extends HtmlResource
     public String getMimeType()
     {
         return "image/png";
+    }
+
+    public void setX(double x)
+    {
+        this.x = x;
+    }
+
+    public double getX()
+    {
+        return x;
+    }
+
+    public void setY(double y)
+    {
+        this.y = y;
+    }
+
+    public double getY()
+    {
+        return y;
+    }
+
+    public float getHeight()
+    {
+        return image.getHeight();
+    }
+
+    public float getWidth()
+    {
+        return image.getWidth();
     }
 }
