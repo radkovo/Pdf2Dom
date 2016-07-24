@@ -3,6 +3,7 @@ Pdf2DOM 1.6 (24 Jul 2016)
 - Image extraction support
 - Significantly extended graphics rendering (non-orthogonal lines, patterns, etc.)
 - Text rendering improvements
+(all contributed by Matthew Abboud)
 
 Pdf2DOM 1.5 (23 Mar 2016)
 - PDF graphics state tracking reworked
