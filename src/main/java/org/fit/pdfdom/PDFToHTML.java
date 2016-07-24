@@ -42,7 +42,7 @@ public class PDFToHTML
     {
         if (args.length < 1)
         {
-            System.out.println("Usage: PDFToHTML <infile> [<outfile>]");
+            System.out.println("Usage: PDFToHTML <infile> [<outfile>] [<options>]");
             System.out.println("Options: ");
             System.out.println("-fm=[mode] Font handler mode. [mode] = EMBED_BASE64, SAVE_TO_DIR, IGNORE");
             System.out.println("-fdir=[path] Directory to extract fonts to. [path] = font extract directory ie dir/my-font-dir");
