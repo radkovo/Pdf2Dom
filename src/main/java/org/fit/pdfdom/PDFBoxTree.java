@@ -200,11 +200,14 @@ public abstract class PDFBoxTree extends PDFTextStripper
 
     public void processPage(PDPage page) throws IOException
     {
-        pdpage = page;
-        updateFontTable();
-        startNewPage();
-        super.processPage(page);
-        finishBox();
+        if (getCurrentPageNo() >= startPage && getCurrentPageNo() <= endPage)
+        {
+            pdpage = page;
+            updateFontTable();
+            startNewPage();
+            super.processPage(page);
+            finishBox();
+        }
     }
 
     /**
