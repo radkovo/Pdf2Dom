@@ -1,10 +1,18 @@
 package org.fit.pdfdom;
 
+import org.apache.commons.io.FileUtils;
+import org.apache.pdfbox.pdmodel.PDDocument;
+import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.junit.Assert;
 import org.junit.Test;
 
+import javax.xml.parsers.ParserConfigurationException;
+import javax.xml.transform.TransformerException;
+import java.io.*;
+
+import static org.fit.pdfdom.TestUtils.getOutputEnabled;
 import static org.hamcrest.CoreMatchers.containsString;
 import static org.hamcrest.core.IsNot.not;
 import static org.hamcrest.core.AnyOf.anyOf;
@@ -62,4 +70,43 @@ public class TestPDFDomTree
                 text.attr("style"), containsString("webkit-text-stroke: #ff00ff"));
     }
 
+    @Test
+    public void givenMultiPagePdf_renderOnlyFirstPage_outputHtmlOnlyHasFirstPage() throws Exception
+    {
+        Document htmlDoc = convertWithPageRange(testPath + "3-page-document.pdf", 0, 1);
+        String htmlText = htmlDoc.html();
+
+        Assert.assertThat(htmlText, containsString("#1"));
+
+        Assert.assertThat(htmlText, not(containsString("#2")));
+        Assert.assertThat(htmlText, not(containsString("#3")));
+    }
+
+    public static Document convertWithPageRange(String resource, int start, int end) throws Exception
+    {
+        InputStream is = TestUtils.class.getResourceAsStream(resource);
+        Document doc = parseWithPdfDomTree(is, start, end);
+        is.close();
+
+        if (getOutputEnabled()) {
+            File debugOutFile = new File(resource.replace(".pdf", ".html").replaceAll(".*/", ""));
+            FileUtils.write(debugOutFile, doc.outerHtml());
+        }
+        return doc;
+    }
+
+    public static Document parseWithPdfDomTree(InputStream is, int start, int end) throws Exception
+    {
+        PDDocument pdf = PDDocument.load(is);
+        PDFDomTree parser = new PDFDomTree();
+        parser.setStartPage(start);
+        parser.setEndPage(end);
+
+        Writer output = new StringWriter();
+        parser.writeText(pdf, output);
+        pdf.close();
+        String htmlOutput = output.toString();
+
+        return Jsoup.parse(htmlOutput);
+    }
 }
