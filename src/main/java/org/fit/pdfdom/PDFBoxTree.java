@@ -756,7 +756,7 @@ public abstract class PDFBoxTree extends PDFTextStripper
     private String findKnownFontFamily(String font) {
         for (String fontFamilyOn : cssFontFamily)
         {
-            if (font.toLowerCase().lastIndexOf(fontFamilyOn.toLowerCase()) >= 0)
+            if (font.toLowerCase().equals(fontFamilyOn.toLowerCase()))
                 return fontFamilyOn;
         }
 
