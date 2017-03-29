@@ -88,7 +88,7 @@ public abstract class PDFBoxTree extends PDFTextStripper
     public static final String UNIT = "pt";
 
     /** Known font names that are recognized in the PDF files */
-    protected static String[] cssFontFamily = { "Times New Roman", "Times", "Garamond", "Helvetica", "Arial", "Arial Narrow", "Verdana", "Courier New", "MS Sans Serif" };
+    protected static String[] cssFontFamily = { "Times New Roman", "Times", "Garamond", "Helvetica", "Arial Narrow", "Arial", "Verdana", "Courier New", "MS Sans Serif" };
 
     /** Known font subtypes recognized in PDF files */
     protected static String[] pdFontType =    { "normal", "roman",  "bold",   "italic", "bolditalic" };
@@ -756,7 +756,7 @@ public abstract class PDFBoxTree extends PDFTextStripper
     private String findKnownFontFamily(String font) {
         for (String fontFamilyOn : cssFontFamily)
         {
-            if (font.toLowerCase().lastIndexOf(fontFamilyOn.toLowerCase()) >= 0)
+            if (font.toLowerCase().lastIndexOf(fontFamilyOn.toLowerCase().replaceAll("\\s+","")) >= 0)
                 return fontFamilyOn;
         }
 
