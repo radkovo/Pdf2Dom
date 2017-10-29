@@ -564,8 +564,8 @@ public class PDFDomTree extends PDFBoxTree
             ret.append(src);
         } catch (IOException e)
         {
-            log.error("Error writing font face data for font: " + font.getName());
-            e.printStackTrace();
+            log.error("Error writing font face data for font: " + font.getName()
+                    + "Exception: {} {}", e.getMessage(), e.getClass());
         }
         ret.append("');");
         ret.append("}\n");

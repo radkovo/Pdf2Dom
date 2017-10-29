@@ -13,7 +13,6 @@ import org.apache.pdfbox.pdmodel.common.PDStream;
 import org.apache.pdfbox.pdmodel.font.PDFont;
 import org.apache.pdfbox.pdmodel.font.PDFontDescriptor;
 import org.apache.pdfbox.pdmodel.font.PDType0Font;
-import org.fit.pdfdom.resource.Base64Coder;
 import org.fit.pdfdom.resource.HtmlResource;
 import org.mabb.fontverter.FVFont;
 import org.mabb.fontverter.FontVerter;
@@ -197,7 +196,6 @@ public class FontTable
                     return fontData;
             } catch (Exception ex)
             {
-                ex.printStackTrace();
                 log.warn("Error loading type 0 with ttf descendant font '{}' Message: {} {}",
                         fontName, ex.getMessage(), ex.getClass());
 
@@ -243,7 +241,8 @@ public class FontTable
                 return font.getData();
             } catch (Exception ex)
             {
-                ex.printStackTrace();
+                log.warn("Error normalizing font '{}' Message: {} {}",
+                        fontName, ex.getMessage(), ex.getClass());
             }
 
             return new byte[0];

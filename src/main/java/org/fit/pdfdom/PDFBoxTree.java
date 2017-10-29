@@ -360,7 +360,8 @@ public abstract class PDFBoxTree extends PDFTextStripper
             {
                 processFontResources(resources, fontTable);
             } catch (IOException e) {
-                e.printStackTrace();
+                log.error("Error processing font resources: "
+                        + "Exception: {} {}", e.getMessage(), e.getClass());
             }
         }
     }
