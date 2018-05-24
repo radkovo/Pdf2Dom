@@ -23,6 +23,7 @@ import java.awt.Dimension;
 import java.awt.Graphics2D;
 import java.io.IOException;
 import java.net.URL;
+import java.util.Arrays;
 import java.util.List;
 
 import javax.xml.parsers.ParserConfigurationException;
@@ -512,8 +513,9 @@ public class CSSBoxTree extends PDFDomTree
 
         if (line.getAngleDegrees() != 0)
         {
-            TermFunction rotate = tf.createFunction();
-            rotate.setFunctionName("rotate").add(tf.createAngle(String.valueOf(line.getAngleDegrees()), Unit.deg, 1));
+            Term<?>[] angle = new Term<?>[] { tf.createAngle(String.valueOf(line.getAngleDegrees()), Unit.deg, 1) };
+            List<Term<?>> args = Arrays.asList(angle);
+            TermFunction rotate = tf.createFunction("rotate", args);
             ret.push(createDeclaration("transform", rotate));
         }
 
