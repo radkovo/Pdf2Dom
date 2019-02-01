@@ -399,7 +399,7 @@ public abstract class PDFBoxTree extends PDFTextStripper
             {
                 PDFormXObject xObjectForm = (PDFormXObject) xobject;
                 PDResources formResources = xObjectForm.getResources();
-                if (formResources != null)
+                if (formResources != null && formResources != resources && formResources.getCOSObject() != resources.getCOSObject())
                     processFontResources(formResources, table);
             }
         }
