@@ -1,3 +1,7 @@
+Pdf2DOM 1.8 (27 Apr 2019)
+- Avoid infinite loop when scanning font resources
+- Dependency updates
+
 Pdf2DOM 1.7 (30 Jan 2018)
 - Minor font matching and decoding fixes
 - Dependency updates (CSSBox)
