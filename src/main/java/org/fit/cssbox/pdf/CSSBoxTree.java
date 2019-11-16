@@ -19,8 +19,6 @@
  */
 package org.fit.cssbox.pdf;
 
-import java.awt.Dimension;
-import java.awt.Graphics2D;
 import java.io.IOException;
 import java.net.URL;
 import java.util.Arrays;
@@ -43,6 +41,7 @@ import org.apache.pdfbox.pdmodel.common.PDRectangle;
 import org.fit.cssbox.layout.BlockBox;
 import org.fit.cssbox.layout.BlockReplacedBox;
 import org.fit.cssbox.layout.BrowserConfig;
+import org.fit.cssbox.layout.Dimension;
 import org.fit.cssbox.layout.ReplacedImage;
 import org.fit.cssbox.layout.TextBox;
 import org.fit.cssbox.layout.Viewport;
@@ -77,8 +76,6 @@ public class CSSBoxTree extends PDFDomTree
     /** Length units used in the output */
     protected Unit unit = Unit.pt;
     
-    /** Root graphics context */
-	protected Graphics2D g;
 	/** Root visual context */
 	protected VisualContext ctx;
 	/** Preferred dimensions of the result */
@@ -110,10 +107,9 @@ public class CSSBoxTree extends PDFDomTree
      * @throws IOException
      * @throws ParserConfigurationException
      */
-    public CSSBoxTree(Graphics2D g, VisualContext ctx, Dimension dim, URL baseurl) throws IOException, ParserConfigurationException
+    public CSSBoxTree(VisualContext ctx, Dimension dim, URL baseurl) throws IOException, ParserConfigurationException
     {
         super();
-    	this.g = g;
     	this.ctx = ctx;
     	this.dim = dim;
     	this.baseurl = baseurl;
@@ -170,7 +166,7 @@ public class CSSBoxTree extends PDFDomTree
     	//create viewport with the initial dimension
         Element vp = createAnonymousElement(getDocument(), "Xdiv", "block");
         Element root = getDocument().getDocumentElement();
-        viewport = new Viewport(vp, g, ctx, null, root, dim.width, dim.height);
+        viewport = new Viewport(vp, ctx, null, root, dim.width, dim.height);
         viewport.setConfig(config);
         //create the root boxes
         html = createBlock(viewport, root, false);
@@ -288,14 +284,14 @@ public class CSSBoxTree extends PDFDomTree
         BlockBox root;
         if (replaced)
         {
-            BlockReplacedBox rbox = new BlockReplacedBox((Element) n, (Graphics2D) parent.getGraphics().create(), parent.getVisualContext().create());
+            BlockReplacedBox rbox = new BlockReplacedBox((Element) n, parent.getVisualContext().create());
             rbox.setViewport(viewport);
             rbox.setContentObj(new ReplacedImage(rbox, rbox.getVisualContext(), baseurl, n.getAttribute("src")));
             root = rbox;
         }
         else
         {
-            root = new BlockBox((Element) n, (Graphics2D) parent.getGraphics().create(), parent.getVisualContext().create());
+            root = new BlockBox((Element) n, parent.getVisualContext().create());
             root.setViewport(viewport);
         }
         root.setBase(baseurl);
@@ -314,7 +310,7 @@ public class CSSBoxTree extends PDFDomTree
      */
     protected TextBox createTextBox(BlockBox contblock, Text n)
     {
-        TextBox text = new TextBox(n, (Graphics2D) contblock.getGraphics().create(), contblock.getVisualContext().create());
+        TextBox text = new TextBox(n, contblock.getVisualContext().create());
         text.setOrder(next_order++);
         text.setContainingBlockBox(contblock);
         text.setClipBlock(contblock);
@@ -351,9 +347,9 @@ public class CSSBoxTree extends PDFDomTree
         if (style.getFontStyle() != null)
             ret.push(createDeclaration("font-style", tf.createIdent(style.getFontStyle())));
         if (style.getWordSpacing() != 0)
-            ret.push(createDeclaration("word-spacing", tf.createLength((float) style.getWordSpacing(), unit)));
+            ret.push(createDeclaration("word-spacing", tf.createLength(style.getWordSpacing(), unit)));
         if (style.getLetterSpacing() != 0)
-            ret.push(createDeclaration("letter-spacing", tf.createLength((float) style.getLetterSpacing(), unit)));
+            ret.push(createDeclaration("letter-spacing", tf.createLength(style.getLetterSpacing(), unit)));
         if (style.getColor() != null)
         {
             String fillColor = style.getColor();

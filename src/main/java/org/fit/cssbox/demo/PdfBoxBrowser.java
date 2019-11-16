@@ -24,18 +24,27 @@ import java.awt.event.MouseListener;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URL;
-import java.net.URLConnection;
 
 import javax.swing.JFrame;
 import javax.swing.tree.DefaultTreeModel;
 
 import org.apache.pdfbox.pdmodel.PDDocument;
+import org.fit.cssbox.css.CSSNorm;
+import org.fit.cssbox.css.DOMAnalyzer;
+import org.fit.cssbox.io.DOMSource;
+import org.fit.cssbox.io.DefaultDOMSource;
+import org.fit.cssbox.io.DefaultDocumentSource;
+import org.fit.cssbox.io.DocumentSource;
 import org.fit.cssbox.layout.BrowserCanvas;
+import org.fit.cssbox.layout.Dimension;
+import org.fit.cssbox.layout.GraphicsEngine;
 import org.fit.cssbox.layout.Viewport;
-import org.fit.cssbox.pdf.PdfBrowserCanvas;
+import org.fit.cssbox.pdf.PdfEngine;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.w3c.dom.Document;
+
+import cz.vutbr.web.css.MediaSpec;
 
 /**
  * This demo shows a simple browser of PDF files based on transforming the files to DOM and rendering by CSSBox.
@@ -52,24 +61,55 @@ public class PdfBoxBrowser extends org.fit.cssbox.demo.BoxBrowser
     {
         try {
             if (!urlstring.startsWith("http:") &&
-                !urlstring.startsWith("ftp:") &&
-                !urlstring.startsWith("file:"))
-                    urlstring = "http://" + urlstring;
+                    !urlstring.startsWith("https:") &&
+                    !urlstring.startsWith("ftp:") &&
+                    !urlstring.startsWith("file:"))
+                        urlstring = "http://" + urlstring;
+                
+            DocumentSource docSource = new DefaultDocumentSource(urlstring);
+            urlText.setText(docSource.getURL().toString());
             
-            URL url = new URL(urlstring);
-            urlText.setText(url.toString());
-            
-            URLConnection con = url.openConnection();
-            con.setRequestProperty("User-Agent", "Mozilla/5.0 (compatible; BoxBrowserTest/4.x; Linux) CSSBox/4.x (like Gecko)");
-            InputStream is = con.getInputStream();
-            url = con.getURL(); //update the URL after possible redirects
-            
-            log.info("Parsing PDF: " + url);
-            PDDocument doc = loadPdf(is);
-            
+            GraphicsEngine engine;
+            Document dom = null;
+            InputStream is = docSource.getInputStream();
+            if (docSource.getContentType().equals("application/pdf"))
+            {
+                log.info("Parsing PDF: " + docSource.getURL());
+                PDDocument doc = loadPdf(is);
+                engine = new PdfEngine(doc, null,
+                        new Dimension(contentScroll.getSize().width, contentScroll.getSize().height),
+                        docSource.getURL());
+            }
+            else
+            {
+                DOMSource parser = new DefaultDOMSource(docSource);
+                Document doc = parser.parse();
+                String encoding = parser.getCharset();
+                
+                MediaSpec media = new MediaSpec("screen");
+                updateCurrentMedia(media);
+                
+                DOMAnalyzer da = new DOMAnalyzer(doc, docSource.getURL());
+                if (encoding == null)
+                    encoding = da.getCharacterEncoding();
+                da.setDefaultEncoding(encoding);
+                da.setMediaSpec(media);
+                da.attributesToStyles();
+                da.addStyleSheet(null, CSSNorm.stdStyleSheet(), DOMAnalyzer.Origin.AGENT);
+                da.addStyleSheet(null, CSSNorm.userStyleSheet(), DOMAnalyzer.Origin.AGENT);
+                da.addStyleSheet(null, CSSNorm.formsStyleSheet(), DOMAnalyzer.Origin.AGENT);
+                da.getStyleSheets();
+                
+                engine = new GraphicsEngine(da.getRoot(), da, docSource.getURL());
+                dom = doc;
+            }
             is.close();
-
-            contentCanvas = new PdfBrowserCanvas(doc, null, contentScroll.getSize(), url);
+            
+            contentCanvas = new BrowserCanvas(engine);
+            ((BrowserCanvas) contentCanvas).setConfig(config);
+            ((BrowserCanvas) contentCanvas).createLayout(contentScroll.getSize(), contentScroll.getVisibleRect());
+            docSource.close();
+            
             contentCanvas.addMouseListener(new MouseListener() {
                 public void mouseClicked(MouseEvent e)
                 {
@@ -84,17 +124,19 @@ public class PdfBoxBrowser extends org.fit.cssbox.demo.BoxBrowser
             contentScroll.setViewportView(contentCanvas);
 
             //box tree
-            Viewport viewport = ((BrowserCanvas) contentCanvas).getViewport();
+            Viewport viewport = engine.getViewport();
             root = createBoxTree(viewport);
             boxTree.setModel(new DefaultTreeModel(root));
             
             //dom tree
-            Document dom = ((PdfBrowserCanvas) contentCanvas).getBoxTree().getDocument();
+            if (dom == null) //DOM not initialized in PDF mode
+                dom = ((PdfEngine) engine).getBoxTree().getDocument();
             domRoot = createDomTree(dom);
             domTree.setModel(new DefaultTreeModel(domRoot));
             
             //=============================================================================
-            return url;
+            
+            return docSource.getURL();
             
         } catch (Exception e) {
             log.error(e.getMessage());
