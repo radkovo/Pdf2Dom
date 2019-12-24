@@ -56,18 +56,25 @@ public class PathDrawer
                 BufferedImage.TYPE_INT_ARGB);
 
         Graphics2D gfx = image.createGraphics();
-        clearPathGraphics(bounds, gfx);
-
-        drawPathSegments(path, gfx);
-
+        try {
+            clearPathGraphics(bounds, gfx);
+            drawPathSegments(path, gfx);
+        } catch (UnsupportedOperationException e) {
+            log.info("Discarding unsupported path");
+            image = null;
+        }
         gfx.dispose();
 
-        // keep track of whitespace cropped off for html element positioning
-        ImageResource drawnPath = new ImageResource("PathImage", image);
-        drawnPath.setX(bounds.getX());
-        drawnPath.setY(bounds.getY());
-
-        return drawnPath;
+        if (image != null)
+        {
+            // keep track of whitespace cropped off for html element positioning
+            ImageResource drawnPath = new ImageResource("PathImage", image);
+            drawnPath.setX(bounds.getX());
+            drawnPath.setY(bounds.getY());
+            return drawnPath;
+        }
+        else
+            return null;
     }
 
     private void clearPathGraphics(Rectangle2D.Double bounds, Graphics2D gfx) throws IOException

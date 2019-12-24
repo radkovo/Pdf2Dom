@@ -248,7 +248,9 @@ public class PDFDomTree extends PDFBoxTree
                 curpage.appendChild(createLineElement(segm.getX1(), segm.getY1(), segm.getX2(), segm.getY2()));
         }
         else {
-            curpage.appendChild(createPathImage(path));
+            Element pathImage = createPathImage(path);
+            if (pathImage != null)
+                curpage.appendChild(pathImage);
         }
     }
     
@@ -402,8 +404,11 @@ public class PDFDomTree extends PDFBoxTree
         PathDrawer drawer = new PathDrawer(getGraphicsState());
         ImageResource renderedPath = drawer.drawPath(path);
 
-        return createImageElement((float) renderedPath.getX(), (float) renderedPath.getY(),
-                renderedPath.getWidth(), renderedPath.getHeight(), renderedPath);
+        if (renderedPath != null)
+            return createImageElement((float) renderedPath.getX(), (float) renderedPath.getY(),
+                    renderedPath.getWidth(), renderedPath.getHeight(), renderedPath);
+        else
+            return null;
     }
 
     /**
