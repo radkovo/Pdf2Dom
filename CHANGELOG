@@ -1,3 +1,7 @@
+Pdf2DOM 1.9 (03 Jan 2020)
+- Ignore unsupported paths while drawing
+- Dependency updates
+
 Pdf2DOM 1.8 (27 May 2019)
 - Avoid infinite loop when scanning font resources
 - Dependency updates
