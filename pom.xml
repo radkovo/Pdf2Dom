@@ -68,7 +68,7 @@
                 <configuration>
                     <archive>
                         <manifestEntries>
-                            <Automatic-Module-Name>net.sf.cssbox</Automatic-Module-Name>
+                            <Automatic-Module-Name>net.sf.cssbox.pdf2dom</Automatic-Module-Name>
                         </manifestEntries>
                     </archive>
                 </configuration>
