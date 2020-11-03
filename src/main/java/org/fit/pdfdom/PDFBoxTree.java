@@ -711,7 +711,7 @@ public abstract class PDFBoxTree extends PDFTextStripper
         String weight = null;
         String fstyle = null;
 
-        bstyle.setFontSize(text.getFontSizeInPt());
+        bstyle.setFontSize(text.getXScale()); //this seems to give better results than getFontSizeInPt()
         bstyle.setLineHeight(text.getHeight());
 
         if (font != null)
