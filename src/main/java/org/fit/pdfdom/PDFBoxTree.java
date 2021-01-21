@@ -184,7 +184,6 @@ public abstract class PDFBoxTree extends PDFTextStripper
 
     /**
      * Internal initialization.
-     * @throws ParserConfigurationException
      */
     private void init()
     {
