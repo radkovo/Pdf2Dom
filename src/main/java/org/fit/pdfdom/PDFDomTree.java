@@ -83,9 +83,8 @@ public class PDFDomTree extends PDFBoxTree
     /**
      * Creates a new PDF DOM parser.
      * @throws IOException
-     * @throws ParserConfigurationException
      */
-    public PDFDomTree() throws IOException, ParserConfigurationException
+    public PDFDomTree() throws IOException
     {
         super();
         init();
@@ -94,9 +93,8 @@ public class PDFDomTree extends PDFBoxTree
     /**
      * Creates a new PDF DOM parser.
      * @throws IOException
-     * @throws ParserConfigurationException
      */
-    public PDFDomTree(PDFDomTreeConfig config) throws IOException, ParserConfigurationException
+    public PDFDomTree(PDFDomTreeConfig config) throws IOException
     {
         this();
         if (config != null)
@@ -105,9 +103,8 @@ public class PDFDomTree extends PDFBoxTree
 
     /**
      * Internal initialization.
-     * @throws ParserConfigurationException
      */
-    private void init() throws ParserConfigurationException
+    private void init()
     {
         pagecnt = 0;
         textcnt = 0;
@@ -116,7 +113,6 @@ public class PDFDomTree extends PDFBoxTree
     
     /**
      * Creates a new empty HTML document tree.
-     * @throws ParserConfigurationException
      */
     protected void createDocument() throws ParserConfigurationException
     {
