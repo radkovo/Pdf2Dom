@@ -1,3 +1,7 @@
+Pdf2DOM 2.0.0 (01 Feb 2021)
+- CSSBox bindings moved to a separate pdf2dom-cssbox project
+- Minor bugfixes
+
 Pdf2DOM 1.9 (03 Jan 2020)
 - Ignore unsupported paths while drawing
 - Dependency updates
