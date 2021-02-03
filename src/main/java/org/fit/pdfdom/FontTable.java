@@ -28,7 +28,6 @@ import org.slf4j.LoggerFactory;
 public class FontTable
 {
     private static Logger log = LoggerFactory.getLogger(FontTable.class);
-    private static final long serialVersionUID = 1L;
     private static Pattern fontFamilyRegex = Pattern.compile("([^+^-]*)[+-]([^+]*)");
 
     private List<Entry> entries = new ArrayList<Entry>();
@@ -80,7 +79,10 @@ public class FontTable
         int i = 1;
         String usedName = fontName;
         while (isNameUsed(usedName))
+        {
             usedName = fontName + i;
+            i++;
+        }
 
         return usedName;
     }
