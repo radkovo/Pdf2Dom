@@ -1,3 +1,6 @@
+Pdf2DOM 2.0.1 (19 Oct 2021)
+- Security updates of dependencies
+
 Pdf2DOM 2.0.0 (01 Feb 2021)
 - CSSBox bindings moved to a separate pdf2dom-cssbox project
 - Minor bugfixes
