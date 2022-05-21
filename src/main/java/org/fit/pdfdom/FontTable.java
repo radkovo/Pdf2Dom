@@ -176,10 +176,15 @@ public class FontTable
             fileEnding = "otf";
 
             byte[] fontData = fontFile.toByteArray();
+            byte[] fvFontData = null;
+            try {
+                FVFont font = FontVerter.readFont(fontData);
+                fvFontData = tryNormalizeFVFont(font);
+            } catch (IOException e) {
+                log.warn("Unsupported FontFile found. Normalisation will be skipped.");
+            }
 
-            FVFont font = FontVerter.readFont(fontData);
-            byte[] fvFontData = tryNormalizeFVFont(font);
-            if (fvFontData.length != 0)
+            if (fvFontData != null && fvFontData.length != 0)
                 fontData = fvFontData;
 
             return fontData;
