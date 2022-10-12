@@ -1,3 +1,7 @@
+Pdf2DOM 2.0.2 (12 Oct 2022)
+- Minor fix in font processing
+- Security updates
+
 Pdf2DOM 2.0.1 (19 Oct 2021)
 - Security updates of dependencies
 
