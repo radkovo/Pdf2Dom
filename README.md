@@ -1,5 +1,5 @@
 Pdf2Dom
-========
+=======
 
 [![Build Status](https://travis-ci.org/radkovo/Pdf2Dom.png)](https://travis-ci.org/radkovo/Pdf2Dom)
 
@@ -14,5 +14,5 @@ Pdf2Dom is based on the Apache PDFBox™ library.
 See the project page for more information and downloads:
 http://cssbox.sourceforge.net/pdf2dom
 
-See also the [pdf2dom-light](https://github.com/radkovo/pdf2dom-light) fork that provides a simplified version 
+See also the [pdf2dom-lite](https://github.com/radkovo/pdf2dom-lite) fork that provides a simplified version 
 of Pdf2Dom with significantly reduced dependencies.
