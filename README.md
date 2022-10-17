@@ -14,5 +14,5 @@ Pdf2Dom is based on the Apache PDFBox™ library.
 See the project page for more information and downloads:
 http://cssbox.sourceforge.net/pdf2dom
 
-See also the [pdf2dom-lite](https://github.com/radkovo/pdf2dom-lite) fork that provides a simplified version 
-of Pdf2Dom with significantly reduced dependencies.
+See also the [Pdf2Dom-lite](https://github.com/radkovo/Pdf2Dom-lite) fork that provides a lightweight version 
+of Pdf2Dom with no font decoding support but significantly reduced dependencies.
