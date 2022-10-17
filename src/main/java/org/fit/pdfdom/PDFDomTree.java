@@ -471,19 +471,22 @@ public class PDFDomTree extends PDFBoxTree
 
     private void createFontFace(StringBuilder ret, FontTable.Entry font)
     {
-        ret.append("@font-face {");
-        ret.append("font-family:\"").append(font.usedName).append("\";");
-        ret.append("src:url('");
         try
         {
-            String src = config.getFontHandler().handleResource(font);
-            ret.append(src);
+            final String src = config.getFontHandler().handleResource(font);
+            if (src != null && !src.trim().isEmpty()) 
+            {
+                ret.append("@font-face {");
+                ret.append("font-family:\"").append(font.usedName).append("\";");
+                ret.append("src:url('");
+                ret.append(src);
+                ret.append("');");
+                ret.append("}\n");
+            }
         } catch (IOException e)
         {
             log.error("Error writing font face data for font: " + font.getName()
                     + "Exception: {} {}", e.getMessage(), e.getClass());
         }
-        ret.append("');");
-        ret.append("}\n");
     }
 }
