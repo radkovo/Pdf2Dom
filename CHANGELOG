@@ -1,3 +1,7 @@
+Pdf2DOM 2.0.3 (17 Oct 2022)
+- Skip ignored fonts in font-face definitions
+- Prevent line wrap for text boxes
+
 Pdf2DOM 2.0.2 (12 Oct 2022)
 - Minor fix in font processing
 - Security updates
