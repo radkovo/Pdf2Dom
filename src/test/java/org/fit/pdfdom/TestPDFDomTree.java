@@ -1,6 +1,8 @@
 package org.fit.pdfdom;
 
 import org.apache.commons.io.FileUtils;
+import org.apache.pdfbox.Loader;
+import org.apache.pdfbox.io.RandomAccessReadBuffer;
 import org.apache.pdfbox.pdmodel.PDDocument;
 import org.hamcrest.Matchers;
 import org.jsoup.Jsoup;
@@ -100,7 +102,7 @@ public class TestPDFDomTree
 
     public static Document parseWithPdfDomTree(InputStream is, int start, int end) throws Exception
     {
-        PDDocument pdf = PDDocument.load(is);
+        PDDocument pdf = Loader.loadPDF(new RandomAccessReadBuffer(is));
         PDFDomTree parser = new PDFDomTree();
         parser.setStartPage(start);
         parser.setEndPage(end);

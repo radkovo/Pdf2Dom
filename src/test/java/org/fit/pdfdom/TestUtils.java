@@ -1,6 +1,8 @@
 package org.fit.pdfdom;
 
 import org.apache.commons.io.FileUtils;
+import org.apache.pdfbox.Loader;
+import org.apache.pdfbox.io.RandomAccessReadBuffer;
 import org.apache.pdfbox.pdmodel.PDDocument;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
@@ -47,7 +49,7 @@ public class TestUtils
     public static Document parseWithPdfDomTree(InputStream is, PDFDomTreeConfig config)
             throws IOException, ParserConfigurationException, TransformerException
     {
-        PDDocument pdf = PDDocument.load(is);
+        PDDocument pdf = Loader.loadPDF(new RandomAccessReadBuffer(is));
         PDFDomTree parser = new PDFDomTree(config);
 
         Writer output = new StringWriter();

@@ -26,6 +26,7 @@ import java.io.Writer;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.apache.pdfbox.Loader;
 import org.apache.pdfbox.pdmodel.PDDocument;
 import org.fit.pdfdom.resource.HtmlResourceHandler;
 import org.fit.pdfdom.resource.IgnoreResourceHandler;
@@ -70,7 +71,7 @@ public class PDFToHTML
         PDDocument document = null;
         try
         {
-            document = PDDocument.load(new File(infile));
+            document = Loader.loadPDF(new File(infile));
             PDFDomTree parser = new PDFDomTree(config);
             //parser.setDisableImageData(true);
             Writer output = new PrintWriter(outfile, "utf-8");

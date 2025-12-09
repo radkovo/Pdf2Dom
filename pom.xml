@@ -148,7 +148,7 @@
 		<dependency>
 			<groupId>org.apache.pdfbox</groupId>
 			<artifactId>pdfbox</artifactId>
-			<version>2.0.27</version>
+			<version>3.0.6</version>
 		</dependency>
 		<dependency>
 			<groupId>net.mabboud.fontverter</groupId>

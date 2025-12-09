@@ -158,26 +158,26 @@ public abstract class PDFBoxTree extends PDFTextStripper
         super.setSuppressDuplicateOverlappingText(true);
 
         //add operators for tracking the graphic state
-        addOperator(new SetStrokingColorSpace());
-        addOperator(new SetNonStrokingColorSpace());
-        addOperator(new SetLineDashPattern());
-        addOperator(new SetStrokingDeviceGrayColor());
-        addOperator(new SetNonStrokingDeviceGrayColor());
-        addOperator(new SetFlatness());
-        addOperator(new SetLineJoinStyle());
-        addOperator(new SetLineCapStyle());
-        addOperator(new SetStrokingDeviceCMYKColor());
-        addOperator(new SetNonStrokingDeviceCMYKColor());
-        addOperator(new SetLineMiterLimit());
-        addOperator(new SetStrokingDeviceRGBColor());
-        addOperator(new SetNonStrokingDeviceRGBColor());
-        addOperator(new SetRenderingIntent());
-        addOperator(new SetStrokingColor());
-        addOperator(new SetNonStrokingColor());
-        addOperator(new SetStrokingColorN());
-        addOperator(new SetNonStrokingColorN());
-        addOperator(new SetFontAndSize());
-        addOperator(new SetLineWidth());
+        addOperator(new SetStrokingColorSpace(this));
+        addOperator(new SetNonStrokingColorSpace(this));
+        addOperator(new SetLineDashPattern(this));
+        addOperator(new SetStrokingDeviceGrayColor(this));
+        addOperator(new SetNonStrokingDeviceGrayColor(this));
+        addOperator(new SetFlatness(this));
+        addOperator(new SetLineJoinStyle(this));
+        addOperator(new SetLineCapStyle(this));
+        addOperator(new SetStrokingDeviceCMYKColor(this));
+        addOperator(new SetNonStrokingDeviceCMYKColor(this));
+        addOperator(new SetLineMiterLimit(this));
+        addOperator(new SetStrokingDeviceRGBColor(this));
+        addOperator(new SetNonStrokingDeviceRGBColor(this));
+        addOperator(new SetRenderingIntent(this));
+        addOperator(new SetStrokingColor(this));
+        addOperator(new SetNonStrokingColor(this));
+        addOperator(new SetStrokingColorN(this));
+        addOperator(new SetNonStrokingColorN(this));
+        addOperator(new SetFontAndSize(this));
+        addOperator(new SetLineWidth(this));
 
         init();
     }
