@@ -9,13 +9,10 @@
 	 -->
 
 	<modelVersion>4.0.0</modelVersion>
-	<prerequisites>
-		<maven>3.0.4</maven>
-	</prerequisites>
 
 	<groupId>net.sf.cssbox</groupId>
 	<artifactId>pdf2dom</artifactId>
-	<version>2.0.4-SNAPSHOT</version>
+	<version>2.1.0-SNAPSHOT</version>
 	<name>Pdf2Dom</name>
 	<description>Pdf2Dom is a PDF parser that converts the documents to a HTML DOM representation. The obtained DOM tree may be then serialized to a HTML file or further processed. The inline CSS definitions contained in the resulting document are used for making the HTML page as similar as possible to the PDF input. A command-line utility for converting the PDF documents to HTML is included in the distribution package. Pdf2Dom may be also used as an independent Java library with a standard DOM interface for your DOM-based applications or as an alternative parser for the CSSBox rendering engine in order to add the PDF processing capability to CSSBox.</description>
 	<url>http://cssbox.sourceforge.net/pdf2dom</url>
@@ -54,17 +51,17 @@
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-compiler-plugin</artifactId>
-				<version>3.8.1</version>
+				<version>3.14.0</version>
 				<configuration>
-					<source>1.8</source>
-					<target>1.8</target>
+					<source>11</source>
+					<target>11</target>
 				</configuration>
 			</plugin>
 
 			<plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-jar-plugin</artifactId>
-                <version>3.2.0</version>
+                <version>3.5.0</version>
                 <configuration>
                     <archive>
                         <manifestEntries>
@@ -77,18 +74,18 @@
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-resources-plugin</artifactId>
-				<version>3.0.2</version>
+				<version>3.3.1</version>
 			</plugin>
 
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-surefire-plugin</artifactId>
-				<version>2.22.2</version>
+				<version>3.5.2</version>
 			</plugin>
 
 			<plugin>
 				<artifactId>maven-assembly-plugin</artifactId>
-				<version>3.1.1</version>
+				<version>3.3.0</version>
 				<configuration>
 					<descriptors>
 						<descriptor>/src/main/assembly/dist.xml</descriptor>
@@ -106,7 +103,7 @@
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-source-plugin</artifactId>
-				<version>3.1.0</version>
+				<version>3.3.1</version>
 				<executions>
 					<execution>
 						<id>attach-sources</id>
@@ -120,7 +117,7 @@
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-release-plugin</artifactId>
-				<version>2.5.3</version>
+				<version>3.3.0</version>
 				<configuration>
 					<autoVersionSubmodules>true</autoVersionSubmodules>
 					<useReleaseProfile>false</useReleaseProfile>
@@ -132,7 +129,7 @@
 			<plugin>
 				<groupId>org.sonatype.plugins</groupId>
 				<artifactId>nexus-staging-maven-plugin</artifactId>
-				<version>1.6.8</version>
+                <version>1.7.0</version>
 				<extensions>true</extensions>
 				<configuration>
 					<serverId>ossrh</serverId>
@@ -153,17 +150,17 @@
 		<dependency>
 			<groupId>net.mabboud.fontverter</groupId>
 			<artifactId>FontVerter</artifactId>
-			<version>1.2.22</version>
+			<version>1.3.0-SNAPSHOT</version>
 		</dependency>
 		<dependency>
 			<groupId>commons-io</groupId>
 			<artifactId>commons-io</artifactId>
-			<version>2.11.0</version>
+			<version>2.18.0</version>
 		</dependency>
 		<dependency>
 			<groupId>org.slf4j</groupId>
 			<artifactId>slf4j-api</artifactId>
-			<version>1.7.32</version>
+			<version>2.0.17</version>
 		</dependency>
 		<dependency>
 			<groupId>junit</groupId>
